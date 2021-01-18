@@ -1,5 +1,6 @@
 --!NOEXEC
 local ui = UI
+local GameData = Game
 
 local MAIN_WINDOW_FLAGS = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoCollapse | ImGui.WindowFlags_NoResize | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoBringToFrontOnFocus | ImGui.WindowFlags_NoNavFocus | ImGui.WindowFlags_MenuBar
 
@@ -8,7 +9,9 @@ EditorScene = Core.class(Sprite)
 function EditorScene:init()
 	self.particleSystem = Particles.new()
 	
-	self.view = RenderTarget.new(Game.W, Game.H, true)
+	self.rtOriginW = GameData.W
+	self.rtOriginH = GameData.H
+	self.view = RenderTarget.new(GameData.W, GameData.H, true)
 	self:addChild(ui)
 	
 	self:addEventListener("enterFrame", self.drawGUI, self)
@@ -65,17 +68,22 @@ function EditorScene:drawGUI(e)
 	ui:endWindow()
 	
 	if (ui:beginWindow("Particles", nil, ImGui.WindowFlags_NoBackground | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoScrollbar)) then
-		local x1, y1, x2, y2 = ui:getWindowBounds()
-		local w = x2 - x1
-		local h = y2 - y1		
+		local w, h = ui:getContentRegionAvail()	
 		if (self.showCombinedResult) then 		
-			self.particleSystem:addParticles{
-				{x=math.random(4*64),y=math.random(5*256),size=math.random(1,30),color=0xD9B589,ttl=1*60,speedX=1,speedY=0},
-				{x=math.random(2*64),y=math.random(5*256),size=math.random(1,30),color=0xffff00,ttl=30*6,speedX=10,speedY=0},
-			}
+			--self.particleSystem:addParticles{
+			--	{x=math.random(4*64),y=math.random(5*256),size=math.random(1,30),color=0xD9B589,ttl=1*60,speedX=1,speedY=0},
+			--	{x=math.random(2*64),y=math.random(5*256),size=math.random(1,30),color=0xffff00,ttl=30*6,speedX=10,speedY=0},
+			--}
+			
+			for i,ps in ipairs(self.subParticles) do 
+				if (ps.visible) then 
+					addParticles(self.particleSystem, ps, self.rtOriginW, self.rtOriginH)
+				end
+			end
+			
 			self.view:clear(0, 0)
 			self.view:draw(self.particleSystem)
-			ui:scaledImage(self.view, w, h)
+			ui:scaledImage(self.view, w, h, nil, nil, 0, 1)
 		elseif (self.activePS) then
 			--self.view:clear(0, 0)
 			--self.view:draw(self.particleSystem)
@@ -96,6 +104,8 @@ function EditorScene:drawGUI(e)
 	if (self.showStyleEditor) then
 		self.showStyleEditor = ui:showLuaStyleEditor("Style editor", self.showStyleEditor, ImGui.WindowFlags_NoMove)
 	end
+	
+	--ui:showDemoWindow()
 	
 	ui:render()
 	ui:endFrame()
@@ -124,24 +134,49 @@ end
 --
 function EditorScene:drawProperties()
 	if (ui:button("+ add emitter", -1)) then 
-		local sub = SubParticleSystem.new()
-		local n = #self.subParticles + 1
-		self.subParticles[n] = {
-			name = "Emitter"..n,
-			ps = sub,
-		}
+		GameData.EmitterID += 1
+		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID)
+		self.subParticles[#self.subParticles + 1] = sub
 	end
 	ui:separator()
-	for i,t in ipairs(self.subParticles) do 
-		ui:pushStyleColor(ImGui.Col_FrameBg, 0, 0)
-		ui:pushID(i * GI_EMITTERS)
-		t.name = ui:inputText("", t.name, 128)
-		ui:popID()
-		ui:popStyleColor()
-		if (ui:treeNode(t.name)) then 
-			t.ps:draw()
-			ui:popTree()
+	
+	local w, h = ImGui:getContentRegionAvail()
+	
+	ui:beginChild(1, w, h - 50)
+	
+	
+	local i = 1
+	local len = #self.subParticles
+	
+	while (i <= len) do 
+		local ps = self.subParticles[i]
+		
+		local mode, id0, id1 = ps:draw(i)
+		if (ps.delete) then 
+			table.remove(self.subParticles, i)
+			len -= 1
+		else
+			if (mode == "copy") then 
+				self.subParticles[id1]:copyFrom(self.subParticles[id0])
+			elseif (mode == "swap") then 
+				self.subParticles[id0], self.subParticles[id1] = self.subParticles[id1], self.subParticles[id0]
+			end
+			i += 1
+		end
+	end	
+	
+	ui:endChild()
+	ui:button("Delete", -1, -1)
+	if (ui:isItemHovered()) then 
+		ui:beginTooltip()
+		ui:text("Drag and drop emitter here")
+		ui:endTooltip()
+	end
+	if (UI:beginDragDropTarget()) then
+		local payload = UI:acceptDragDropPayload("EMITTER")
+		if (payload) then
+			local id = payload:getNumData()
+			table.remove(self.subParticles, id)
 		end
 	end
-	
 end

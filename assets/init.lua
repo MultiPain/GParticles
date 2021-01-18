@@ -1,6 +1,5 @@
 require "ImGui_beta"
-
-GI_EMITTERS @ 1
+local random = math.random
 
 Game = {
 	-- Screen details
@@ -10,12 +9,43 @@ Game = {
 	Bottom = 0,
 	W = 0, H = 0,
 	CX = 0, CY = 0,
+	EmitterID = 0
 }
 
 -- Updates after program restarts
 Options = {
 	PREVIEW_SIZE = 64,
 }
+
+function frandom(min, max)
+	if (not max) then 
+		max = min
+		min = 0
+	end
+	return min + random() * (max - min)
+end
+
+function addParticles(particleSystem, subSystem, w, h, scale)
+	scale = scale or 1
+	particleSystem:addParticles{{
+		x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w,
+		y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h,
+		size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale,
+		color = subSystem.color,
+		alpha = subSystem.alpha,
+		ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max),
+		speedX = subSystem.speedX + random(subSystem.speedX_min, subSystem.speedX_max),
+		speedY = subSystem.speedY + random(subSystem.speedY_min, subSystem.speedY_max),
+		
+		angle = subSystem.angle + random(subSystem.angle_min, subSystem.angle_max),
+		speedAngular = subSystem.speedAngular + random(subSystem.speedAngular_min, subSystem.speedAngular_max),
+		speedGrowth = subSystem.speedGrowth + random(subSystem.speedGrowth_min, subSystem.speedGrowth_max),
+		decay = subSystem.decay + random(subSystem.decay_min, subSystem.decay_max),
+		decayAngular = subSystem.decayAngular + random(subSystem.decayAngular_min, subSystem.decayAngular_max),
+		decayGrowth = subSystem.decayGrowth + random(subSystem.decayGrowth_min, subSystem.decayGrowth_max),
+		decayAlpha = subSystem.decayAlpha + random(subSystem.decayAlpha_min, subSystem.decayAlpha_max),
+	}}
+end
 
 function loadStyles(imgui)
 	local style = imgui:getStyle()

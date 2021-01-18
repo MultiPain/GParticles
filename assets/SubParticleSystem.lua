@@ -4,15 +4,304 @@ local ui = UI
 
 SubParticleSystem = Core.class()
 
-function SubParticleSystem:init()
+function SubParticleSystem:init(name)
+	self.name = name
+	self.tmpName = name
+	self.visible = true
+	self.delete = false
+	
+	self.xPos = 0.5
+	self.yPos = 0.5
+	self.size = 10
+	self.color = 0xffffff
+	self.alpha = 1
+	self.ttl = 30
+	self.speedX = 0
+	self.speedY = 0
+	
+	self.xPos_min = 0
+	self.yPos_min = 0
+	self.size_min = 0
+	self.ttl_min = 0
+	self.speedX_min = 0
+	self.speedY_min = 0
+	
+	self.xPos_max = 0
+	self.yPos_max = 0
+	self.size_max = 0
+	self.ttl_max = 0
+	self.speedX_max = 0
+	self.speedY_max = 0
+	self.speedY_max = 0
+	self.speedY_max = 0
+	
+	self.angle = 0
+	self.angle_min = 0
+	self.angle_max = 0
+	self.speedAngular = 0
+	self.speedAngular_min = 0
+	self.speedAngular_max = 0
+	self.speedGrowth = 0
+	self.speedGrowth_min = 0
+	self.speedGrowth_max = 0
+	
+	self.decay = 1
+	self.decay_min = 0
+	self.decay_max = 0
+	self.decayAngular = 1
+	self.decayAngular_min = 0
+	self.decayAngular_max = 0
+	self.decayGrowth = 1
+	self.decayGrowth_min = 0
+	self.decayGrowth_max = 0
+	self.decayAlpha = 1
+	self.decayAlpha_min = 0
+	self.decayAlpha_max = 0
+	
 	self.particles = Particles.new()
 	
 	local preview = Options.PREVIEW_SIZE
-	self.view = RenderTarget.new(preview, preview)
-	
-	
+	self.view = RenderTarget.new(preview * 2, preview)
 end
 --
-function SubParticleSystem:draw()
-	ui:text("Helo")
+function SubParticleSystem:dragAndDrop(id)
+	local CTRL = io:isKeyCtrl()
+	if (ui:beginDragDropSource(ImGui.DragDropFlags_None)) then
+		ui:setNumDragDropPayload("EMITTER", id)
+		local mode = "Swap "
+		if (CTRL) then 
+			mode = "Copy "
+		end
+		ui:text(mode..self.name)
+		ui:endDragDropSource()
+	end
+	
+	if (UI:beginDragDropTarget()) then
+		local payload = UI:acceptDragDropPayload("EMITTER")
+		if (payload) then
+			local payload_id = payload:getNumData()
+			if (CTRL) then 
+				return "copy", payload_id, id
+			end
+			return "swap", payload_id, id
+		end
+	end
+end
+--
+function SubParticleSystem:copyFrom(other)
+	self.xPos = other.xPos 
+	self.yPos = other.yPos 
+	self.size = other.size 
+	self.color = other.color 
+	self.alpha = other.alpha 
+	self.ttl = other.ttl 
+	self.speedX = other.speedX 
+	self.speedY = other.speedY 
+	
+	self.xPos_min = other.xPos_min 
+	self.yPos_min = other.yPos_min 
+	self.size_min = other.size_min 
+	self.ttl_min = other.ttl_min 
+	self.speedX_min = other.speedX_min 
+	self.speedY_min = other.speedY_min 
+	
+	self.xPos_max = other.xPos_max 
+	self.yPos_max = other.yPos_max 
+	self.size_max = other.size_max 
+	self.ttl_max = other.ttl_max 
+	self.speedX_max = other.speedX_max 
+	self.speedY_max = other.speedY_max 
+	self.speedY_max = other.speedY_max 
+	self.speedY_max = other.speedY_max 
+	
+	self.angle = other.angle 
+	self.angle_min = other.angle_min 
+	self.angle_max = other.angle_max 
+	self.speedAngular = other.speedAngular 
+	self.speedAngular_min = other.speedAngular_min 
+	self.speedAngular_max = other.speedAngular_max 
+	self.speedGrowth = other.speedGrowth 
+	self.speedGrowth_min = other.speedGrowth_min 
+	self.speedGrowth_max = other.speedGrowth_max 
+	
+	self.decay = other.decay 
+	self.decay_min = other.decay_min 
+	self.decay_max = other.decay_max 
+	self.decayAngular = other.decayAngular 
+	self.decayAngular_min = other.decayAngular_min 
+	self.decayAngular_max = other.decayAngular_max 
+	self.decayGrowth = other.decayGrowth 
+	self.decayGrowth_min = other.decayGrowth_min 
+	self.decayGrowth_max = other.decayGrowth_max 
+	self.decayAlpha = other.decayAlpha 
+	self.decayAlpha_min = other.decayAlpha_min 
+	self.decayAlpha_max = other.decayAlpha_max 
+end
+--
+function SubParticleSystem:draw(id)
+	local mode, id0, id1
+	ui:pushID("emitterVisble"..id)
+	self.visible = ui:checkbox("", self.visible)
+	ui:popID()
+	ui:sameLine()
+	
+	if (ui:collapsingHeader(self.name)) then 
+		mode, id0, id1 = self:dragAndDrop(id)
+		ui:pushID("emitterName"..id)
+		local enterFlag = false
+		self.tmpName, enterFlag = ui:inputTextWithHint("", self.name, "Name", 128, ImGui.InputTextFlags_EnterReturnsTrue)
+		ui:popID()
+		if (enterFlag) then 
+			self.name = self.tmpName
+		end
+		ui:sameLine()
+		
+		ui:pushID("emitterDelete"..id)
+		self.delete = ui:button("Delete", -1)
+		ui:popID()
+		
+		local w = ui:getContentRegionAvail() - 5
+		local SIZE = Options.PREVIEW_SIZE
+		addParticles(self.particles, self, SIZE * 2, SIZE, 0.2)
+		self.view:clear(0,0)
+		self.view:draw(self.particles)
+		ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
+		
+		
+		self.color, self.alpha = ui:colorEdit4("Color##"..id, self.color, self.alpha)
+		if (ui:treeNode("XPos##"..id)) then
+			self.xPos = ui:sliderFloat("XPos##"..id, self.xPos, 0, 1)
+			self.xPos_min, self.xPos_max = ui:sliderFloat2("Randomize##XPos"..id, self.xPos_min, self.xPos_max, -0.5, 0.5)
+			if (ui:button("Reset##XPos"..id, -1)) then
+				self.xPos = 0.5
+				self.xPos_min = 0
+				self.xPos_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("YPos##"..id)) then
+			self.yPos = ui:sliderFloat("YPos##"..id, self.yPos, 0, 1)
+			self.yPos_min, self.yPos_max = ui:sliderFloat2("Randomize##YPos"..id, self.yPos_min, self.yPos_max, -0.5, 0.5)
+			if (ui:button("Reset##YPos"..id, -1)) then
+				self.yPos = 0.5
+				self.yPos_min = 0
+				self.yPos_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("Size##"..id)) then
+			self.size = ui:sliderFloat("Size##"..id, self.size, 0, 256)
+			self.size_min, self.size_max = ui:sliderFloat2("Randomize##Size"..id, self.size_min, self.size_max, 0, 128)
+			if (ui:button("Reset##Size"..id, -1)) then
+				self.size = 10
+				self.size_min = 0
+				self.size_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("Ttl##"..id)) then
+			self.ttl = ui:sliderInt("Ttl##"..id, self.ttl, 0, 1800)
+			self.ttl_min, self.ttl_max = ui:sliderFloat2("Randomize##Ttl"..id, self.ttl_min, self.ttl_max, 0, 900)
+			if (ui:button("Reset##Ttl"..id, -1)) then
+				self.ttl = 30
+				self.ttl_min = 0
+				self.ttl_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("SpeedX##"..id)) then
+			self.speedX = ui:sliderFloat("SpeedX##"..id, self.speedX, -8, 8)
+			self.speedX_min, self.speedX_max = ui:sliderFloat2("Randomize##SpeedX"..id, self.speedX_min, self.speedX_max, -8, 8)
+			if (ui:button("Reset##SpeedX"..id, -1)) then
+				self.speedX = 0
+				self.speedX_min = 0
+				self.speedX_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("SpeedY##"..id)) then
+			self.speedY = ui:sliderFloat("SpeedY##"..id, self.speedY, -8, 8)
+			self.speedY_min, self.speedY_max = ui:sliderFloat2("Randomize##SpeedY"..id, self.speedY_min, self.speedY_max, -8, 8)
+			if (ui:button("Reset##SpeedY"..id, -1)) then
+				self.speedY = 0
+				self.speedY_min = 0
+				self.speedY_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("Angle##"..id)) then
+			self.angle = ui:sliderFloat("Angle##"..id, self.angle, 0, 360)
+			self.angle_min, self.angle_max = ui:sliderFloat2("Randomize##Angle"..id, self.angle_min, self.angle_max, 0, 360)
+			if (ui:button("Reset##Angle"..id, -1)) then
+				self.angle = 0
+				self.angle_min = 0
+				self.angle_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("SpeedAngular##"..id)) then
+			self.speedAngular = ui:sliderFloat("SpeedAngular##"..id, self.speedAngular, -2, 2)
+			self.speedAngular_min, self.speedAngular_max = ui:sliderFloat2("Randomize##SpeedAngular"..id, self.speedAngular_min, self.speedAngular_max, -0.5, 0.5)
+			if (ui:button("Reset##SpeedAngular"..id, -1)) then
+				self.speedAngular = 0
+				self.speedAngular_min = 0
+				self.speedAngular_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("SpeedGrowth##"..id)) then
+			self.speedGrowth = ui:sliderFloat("SpeedGrowth##"..id, self.speedGrowth, -2, 2)
+			self.speedGrowth_min, self.speedGrowth_max = ui:sliderFloat2("Randomize##SpeedGrowth"..id, self.speedGrowth_min, self.speedGrowth_max, -0.5, 0.5)
+			if (ui:button("Reset##SpeedGrowth"..id, -1)) then
+				self.speedGrowth = 0
+				self.speedGrowth_min = 0
+				self.speedGrowth_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("Decay##"..id)) then
+			self.decay = ui:sliderFloat("Decay##"..id, self.decay, -2, 2)
+			self.decay_min, self.decay_max = ui:sliderFloat2("Randomize##Decay"..id, self.decay_min, self.decay_max, -0.5, 0.5)
+			if (ui:button("Reset##Decay"..id, -1)) then
+				self.decay = 1
+				self.decay_min = 0
+				self.decay_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("DecayAngular##"..id)) then
+			self.decayAngular = ui:sliderFloat("DecayAngular##"..id, self.decayAngular, -2, 2)
+			self.decayAngular_min, self.decayAngular_max = ui:sliderFloat2("Randomize##DecayAngular"..id, self.decayAngular_min, self.decayAngular_max, -0.5, 0.5)
+			if (ui:button("Reset##DecayAngular"..id, -1)) then
+				self.decayAngular = 1
+				self.decayAngular_min = 0
+				self.decayAngular_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("DecayGrowth##"..id)) then
+			self.decayGrowth = ui:sliderFloat("DecayGrowth##"..id, self.decayGrowth, -2, 2)
+			self.decayGrowth_min, self.decayGrowth_max = ui:sliderFloat2("Randomize##DecayGrowth"..id, self.decayGrowth_min, self.decayGrowth_max, -0.5, 0.5)
+			if (ui:button("Reset##DecayGrowth"..id, -1)) then
+				self.decayGrowth = 1
+				self.decayGrowth_min = 0
+				self.decayGrowth_max = 0
+			end
+			ui:treePop()
+		end
+		if (ui:treeNode("DecayAlpha##"..id)) then
+			self.decayAlpha = ui:sliderFloat("DecayAlpha##"..id, self.decayAlpha, -2, 2)
+			self.decayAlpha_min, self.decayAlpha_max = ui:sliderFloat2("Randomize##DecayAlpha"..id, self.decayAlpha_min, self.decayAlpha_max, -0.5, 0.5)
+			if (ui:button("Reset##DecayAlpha"..id, -1)) then
+				self.decayAlpha = 1
+				self.decayAlpha_min = 0
+				self.decayAlpha_max = 0
+			end
+			ui:treePop()
+		end
+	else
+		mode, id0, id1 = self:dragAndDrop(id)
+	end
+	
+	return mode, id0, id1
 end
