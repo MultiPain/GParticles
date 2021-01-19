@@ -3,6 +3,7 @@ local BLEND_MODES = {"None", Sprite.ADD, Sprite.ALPHA, Sprite.MULTIPLY, Sprite.N
 local ui = UI
 local GameData = Game
 
+
 local MAIN_WINDOW_FLAGS = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoCollapse | ImGui.WindowFlags_NoResize | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoBringToFrontOnFocus | ImGui.WindowFlags_NoNavFocus | ImGui.WindowFlags_MenuBar
 
 EditorScene = Core.class(Sprite)
@@ -24,6 +25,7 @@ function EditorScene:init()
 	self.showCombinedResult = true
 	self.showLog = false
 	self.showStyleEditor = false
+	self.showDemoWindow = false
 	
 	self.image = nil
 	self.imageName = ""
@@ -88,9 +90,15 @@ function EditorScene:drawGUI(e)
 				if (ui:menuItem("Log", nil, self.showLog)) then 
 					self.showLog = not self.showLog
 				end
+				
 				if (ui:menuItem("Style editor", nil, self.showStyleEditor)) then 
 					self.showStyleEditor = not self.showStyleEditor
 				end
+				
+				if (ui:menuItem("Demo window", nil, self.showDemoWindow)) then 
+					self.showDemoWindow = not self.showDemoWindow
+				end
+				
 				ui:endMenu()
 			end
 			ui:endMenuBar()
@@ -128,7 +136,7 @@ function EditorScene:drawGUI(e)
 		self.showLog = ui:showLog("Log", self.showLog, ImGui.WindowFlags_NoMove)
 	end
 	
-	if (ui:beginWindow("Emitters", nil, ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoResize)) then
+	if (ui:beginWindow("Emitters "..ICO_PARTICLES, nil, ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoResize)) then
 		self:drawProperties()
 	end
     ui:endWindow()
@@ -137,31 +145,12 @@ function EditorScene:drawGUI(e)
 		self.showStyleEditor = ui:showLuaStyleEditor("Style editor", self.showStyleEditor, ImGui.WindowFlags_NoMove)
 	end
 	
-	--ui:showDemoWindow()
+	if (self.showDemoWindow) then 
+		ui:showDemoWindow()
+	end
 	
 	ui:render()
 	ui:endFrame()
-end
---
-function EditorScene:createDock(ui, dockspace_id)
-	ui:dockBuilderRemoveNode(dockspace_id)
-	ui:dockBuilderAddNode(dockspace_id)
-	
-	-- split main node into 2 (left and right node), return left panel id AND modified dockspace id
-	local dock_id_left,_,dockspace_id= ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Left, 0.2, nil, dockspace_id)
-	local dock_id_right,_,dockspace_id= ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Right, 0.5, nil, dockspace_id)
-	
-	-- split right node into 2, return bottom panel id
-	local dock_id_bottom = ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Down, 0.2, nil, dockspace_id)
-	
-	-- split right node into 2 (but in different direction), return top panel id
-	local dock_id_top = ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Up, 0.7, nil, dockspace_id)
-
-	ui:dockBuilderDockWindow("Particles", dock_id_top)
-	ui:dockBuilderDockWindow("Log", dock_id_bottom)
-	ui:dockBuilderDockWindow("Emitters", dock_id_left)
-	ui:dockBuilderDockWindow("Style editor", dock_id_right)
-	ui:dockBuilderFinish(dockspace_id)
 end
 --
 function EditorScene:drawProperties()
@@ -192,7 +181,7 @@ function EditorScene:drawProperties()
 		end
 	end
 	
-	if (ui:button("+ add emitter", -1)) then 
+	if (ui:button("Add emitter", -1)) then 
 		GameData.EmitterID += 1
 		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID, self.images)
 		self.subParticles[#self.subParticles + 1] = sub
@@ -225,7 +214,7 @@ function EditorScene:drawProperties()
 	end	
 	
 	ui:endChild()
-	ui:button("Delete", -1, -1)
+	ui:button(ICO_TRASH, -1, -1)
 	if (ui:isItemHovered()) then 
 		ui:beginTooltip()
 		ui:text("Drag and drop emitter here")
@@ -239,3 +228,25 @@ function EditorScene:drawProperties()
 		end
 	end
 end
+--
+function EditorScene:createDock(ui, dockspace_id)
+	ui:dockBuilderRemoveNode(dockspace_id)
+	ui:dockBuilderAddNode(dockspace_id)
+	
+	-- split main node into 2 (left and right node), return left panel id AND modified dockspace id
+	local dock_id_left,_,dockspace_id= ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Left, 0.2, nil, dockspace_id)
+	local dock_id_right,_,dockspace_id= ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Right, 0.5, nil, dockspace_id)
+	
+	-- split right node into 2, return bottom panel id
+	local dock_id_bottom = ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Down, 0.2, nil, dockspace_id)
+	
+	-- split right node into 2 (but in different direction), return top panel id
+	local dock_id_top = ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Up, 0.7, nil, dockspace_id)
+
+	ui:dockBuilderDockWindow("Particles", dock_id_top)
+	ui:dockBuilderDockWindow("Log", dock_id_bottom)
+	ui:dockBuilderDockWindow("Emitters "..ICO_PARTICLES, dock_id_left)
+	ui:dockBuilderDockWindow("Style editor", dock_id_right)
+	ui:dockBuilderFinish(dockspace_id)
+end
+--

@@ -10,6 +10,8 @@ function SubParticleSystem:init(name)
 	
 	self.visible = true
 	self.delete = false
+	self.growDown = false
+	self.fade = ""
 	
 	self.direction = 0
 	self.spread = 0
@@ -17,53 +19,23 @@ function SubParticleSystem:init(name)
 	self.color = 0xffffff
 	self.alpha = 1
 	
-	self.xPos = 0.5
-	self.xPos_min = 0
-	self.xPos_max = 0
-	
-	self.yPos = 0.5
-	self.yPos_min = 0
-	self.yPos_max = 0
-	
-	self.size = 10
-	self.size_min = 0
-	self.size_max = 0
-	
-	self.ttl = 30
-	self.ttl_min = 0
-	self.ttl_max = 0
-	
-	self.speed = 0
-	self.speed_min = 0
-	self.speed_max = 0
-	
-	self.angle = 0
-	self.angle_min = 0
-	self.angle_max = 0
-	self.speedAngular = 0
-	self.speedAngular_min = 0
-	self.speedAngular_max = 0
-	self.speedGrowth = 0
-	self.speedGrowth_min = 0
-	self.speedGrowth_max = 0
-	
-	self.decay = 1
-	self.decay_min = 0
-	self.decay_max = 0
-	self.decayAngular = 1
-	self.decayAngular_min = 0
-	self.decayAngular_max = 0
-	self.decayGrowth = 1
-	self.decayGrowth_min = 0
-	self.decayGrowth_max = 0
-	self.decayAlpha = 1
-	self.decayAlpha_min = 0
-	self.decayAlpha_max = 0
+	self.xPos = 0.5			self.xPos_min = 0 			self.xPos_max = 0
+	self.yPos = 0.5			self.yPos_min = 0 			self.yPos_max = 0
+	self.size = 10			self.size_min = 0 			self.size_max = 0
+	self.ttl = 30			self.ttl_min = 0 			self.ttl_max = 0
+	self.speed = 0			self.speed_min = 0 			self.speed_max = 0
+	self.angle = 0			self.angle_min = 0 			self.angle_max = 0
+	self.speedAngular = 0	self.speedAngular_min = 0 	self.speedAngular_max = 0
+	self.speedGrowth = 0	self.speedGrowth_min = 0 	self.speedGrowth_max = 0
+	self.decay = 1			self.decay_min = 0 			self.decay_max = 0
+	self.decayAngular = 1	self.decayAngular_min = 0 	self.decayAngular_max = 0
+	self.decayGrowth = 1	self.decayGrowth_min = 0 	self.decayGrowth_max = 0
+	self.decayAlpha = 1		self.decayAlpha_min = 0 	self.decayAlpha_max = 0
 	
 	self.particles = Particles.new()
 	
-	local preview = Options.PREVIEW_SIZE
-	self.view = RenderTarget.new(preview * 2, preview)
+	local previewSize = Options.PREVIEW_SIZE
+	self.view = RenderTarget.new(previewSize, previewSize)
 end
 --
 function SubParticleSystem:dragAndDrop(id)
@@ -146,7 +118,10 @@ end
 function SubParticleSystem:draw(id)
 	local mode, id0, id1
 	ui:pushID("emitterVisble"..id)
-	self.visible = ui:checkbox("", self.visible)
+	--self.visible = ui:checkbox("", self.visible)
+	if (ui:button(self.visible and ICO_ON or ICO_OFF)) then 
+		self.visible = not self.visible
+	end
 	ui:popID()
 	ui:sameLine()
 	
@@ -167,7 +142,7 @@ function SubParticleSystem:draw(id)
 		
 		local w = ui:getContentRegionAvail() - 5
 		local SIZE = Options.PREVIEW_SIZE
-		addParticles(self.particles, self, SIZE * 2, SIZE, 0.2)
+		addParticles(self.particles, self, SIZE, SIZE, 0.2)
 		self.view:clear(0,0)
 		self.view:draw(self.particles)
 		ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
@@ -261,16 +236,21 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("SpeedGrowth##"..id)) then
-			self.speedGrowth = ui:sliderFloat("SpeedGrowth##"..id, self.speedGrowth, -2, 2)
-			self.speedGrowth_min, self.speedGrowth_max = ui:sliderFloat2("Randomize##SpeedGrowth"..id, self.speedGrowth_min, self.speedGrowth_max, -0.5, 0.5)
-			if (ui:button("Reset##SpeedGrowth"..id, -1)) then
-				self.speedGrowth = 0
-				self.speedGrowth_min = 0
-				self.speedGrowth_max = 0
+			self.growDown = ui:checkbox("Grow down##"..id, self.growDown)
+			if (not self.growDown) then 
+				self.speedGrowth = ui:sliderFloat("SpeedGrowth##"..id, self.speedGrowth, -2, 2)
+				self.speedGrowth_min, self.speedGrowth_max = ui:sliderFloat2("Randomize##SpeedGrowth"..id, self.speedGrowth_min, self.speedGrowth_max, -0.5, 0.5)
+				if (ui:button("Reset##SpeedGrowth"..id, -1)) then
+					self.speedGrowth = 0
+					self.speedGrowth_min = 0
+					self.speedGrowth_max = 0
+				end
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("Decay##"..id)) then
 			self.decay = ui:sliderFloat("Decay##"..id, self.decay, -2, 2)
 			self.decay_min, self.decay_max = ui:sliderFloat2("Randomize##Decay"..id, self.decay_min, self.decay_max, -0.5, 0.5)
@@ -281,6 +261,7 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("DecayAngular##"..id)) then
 			self.decayAngular = ui:sliderFloat("DecayAngular##"..id, self.decayAngular, -2, 2)
 			self.decayAngular_min, self.decayAngular_max = ui:sliderFloat2("Randomize##DecayAngular"..id, self.decayAngular_min, self.decayAngular_max, -0.5, 0.5)
@@ -291,6 +272,7 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("DecayGrowth##"..id)) then
 			self.decayGrowth = ui:sliderFloat("DecayGrowth##"..id, self.decayGrowth, -2, 2)
 			self.decayGrowth_min, self.decayGrowth_max = ui:sliderFloat2("Randomize##DecayGrowth"..id, self.decayGrowth_min, self.decayGrowth_max, -0.5, 0.5)
@@ -301,13 +283,20 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("DecayAlpha##"..id)) then
-			self.decayAlpha = ui:sliderFloat("DecayAlpha##"..id, self.decayAlpha, -2, 2)
-			self.decayAlpha_min, self.decayAlpha_max = ui:sliderFloat2("Randomize##DecayAlpha"..id, self.decayAlpha_min, self.decayAlpha_max, -0.5, 0.5)
-			if (ui:button("Reset##DecayAlpha"..id, -1)) then
-				self.decayAlpha = 1
-				self.decayAlpha_min = 0
-				self.decayAlpha_max = 0
+			if (ui:radioButton("No fade", self.fade == "")) then self.fade = "" end ui:sameLine()
+			if (ui:radioButton("Fade IN", self.fade == "IN")) then self.fade = "IN" end ui:sameLine()
+			if (ui:radioButton("Fade OUT", self.fade == "OUT")) then self.fade = "OUT" end
+			
+			if (self.fade == "") then 
+				self.decayAlpha = ui:sliderFloat("DecayAlpha##"..id, self.decayAlpha, -2, 2)
+				self.decayAlpha_min, self.decayAlpha_max = ui:sliderFloat2("Randomize##DecayAlpha"..id, self.decayAlpha_min, self.decayAlpha_max, -0.5, 0.5)
+				if (ui:button("Reset##DecayAlpha"..id, -1)) then
+					self.decayAlpha = 1
+					self.decayAlpha_min = 0
+					self.decayAlpha_max = 0
+				end
 			end
 			ui:treePop()
 		end

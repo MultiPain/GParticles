@@ -5,6 +5,29 @@ ui:setAutoUpdateCursor(true)
 io = ui:getIO()
 io:setIniFilename(nil) -- disable INI file (new API)
 io:addConfigFlags(ImGui.ConfigFlags_DockingEnable)
+local FontAtlas = io:getFonts()
+local icons = FontAtlas:addFont("MaterialIcons-Regular.ttf", 16, {
+	glyphs = {
+		ranges = {{0xE3A2,0xE3A5}},
+		chars = {
+			0xE872, -- trash
+			0xE8F4, -- on
+			0xE8F5, -- off
+			0xE3C9, -- pen
+			0xE161, -- save
+			0xE05E, -- new
+			0xE3A5, -- particles
+		},
+	},
+	oversampleH = 2,
+	oversampleV = 1,
+	glyphOffsetX = -1,
+	glyphOffsetY = 4,
+	pixelSnapH = true,
+	mergeMode = true,
+})
+FontAtlas:bake()
+
 loadStyles(ui)
 UI = ui
 

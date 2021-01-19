@@ -7,6 +7,14 @@ local sin = math.sin
 
 PI2 @ 6.28318530718
 
+ICO_PARTICLES = utf8.char(0xE3A5)
+ICO_TRASH = utf8.char(0xE872)
+ICO_ON = utf8.char(0xE8F4)
+ICO_OFF = utf8.char(0xE8F5)
+ICO_PEN = utf8.char(0xE3C9)
+ICO_SAVE = utf8.char(0xE161)
+ICO_NEW = utf8.char(0xE05E)
+
 Game = {
 	-- Screen details
 	Left = 0, 
@@ -20,7 +28,7 @@ Game = {
 
 -- Updates after program restarts
 Options = {
-	PREVIEW_SIZE = 64,
+	PREVIEW_SIZE = 128,
 }
 
 function math.clamp(v, min, max)
