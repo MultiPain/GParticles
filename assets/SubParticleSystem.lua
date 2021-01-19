@@ -1,39 +1,41 @@
 --!NOEXEC
-
 local ui = UI
+local toDeg = 180 / math.pi
 
 SubParticleSystem = Core.class()
 
 function SubParticleSystem:init(name)
 	self.name = name
 	self.tmpName = name
+	
 	self.visible = true
 	self.delete = false
 	
-	self.xPos = 0.5
-	self.yPos = 0.5
-	self.size = 10
+	self.direction = 0
+	self.spread = 0
+	
 	self.color = 0xffffff
 	self.alpha = 1
-	self.ttl = 30
-	self.speedX = 0
-	self.speedY = 0
 	
+	self.xPos = 0.5
 	self.xPos_min = 0
-	self.yPos_min = 0
-	self.size_min = 0
-	self.ttl_min = 0
-	self.speedX_min = 0
-	self.speedY_min = 0
-	
 	self.xPos_max = 0
+	
+	self.yPos = 0.5
+	self.yPos_min = 0
 	self.yPos_max = 0
+	
+	self.size = 10
+	self.size_min = 0
 	self.size_max = 0
+	
+	self.ttl = 30
+	self.ttl_min = 0
 	self.ttl_max = 0
-	self.speedX_max = 0
-	self.speedY_max = 0
-	self.speedY_max = 0
-	self.speedY_max = 0
+	
+	self.speed = 0
+	self.speed_min = 0
+	self.speed_max = 0
 	
 	self.angle = 0
 	self.angle_min = 0
@@ -89,37 +91,37 @@ function SubParticleSystem:dragAndDrop(id)
 end
 --
 function SubParticleSystem:copyFrom(other)
-	self.xPos = other.xPos 
-	self.yPos = other.yPos 
-	self.size = other.size 
-	self.color = other.color 
-	self.alpha = other.alpha 
-	self.ttl = other.ttl 
-	self.speedX = other.speedX 
-	self.speedY = other.speedY 
+	self.color = other.color
+	self.alpha = other.alpha
 	
-	self.xPos_min = other.xPos_min 
-	self.yPos_min = other.yPos_min 
-	self.size_min = other.size_min 
-	self.ttl_min = other.ttl_min 
-	self.speedX_min = other.speedX_min 
-	self.speedY_min = other.speedY_min 
+	self.xPos = other.xPos
+	self.xPos_min = other.xPos_min
+	self.xPos_max = other.xPos_max
 	
-	self.xPos_max = other.xPos_max 
-	self.yPos_max = other.yPos_max 
-	self.size_max = other.size_max 
-	self.ttl_max = other.ttl_max 
-	self.speedX_max = other.speedX_max 
-	self.speedY_max = other.speedY_max 
-	self.speedY_max = other.speedY_max 
-	self.speedY_max = other.speedY_max 
+	self.yPos = other.yPos
+	self.yPos_min = other.yPos_min
+	self.yPos_max = other.yPos_max
+	
+	self.size = other.size
+	self.size_min = other.size_min
+	self.size_max = other.size_max
+	
+	self.ttl = other.ttl
+	self.ttl_min = other.ttl_min
+	self.ttl_max = other.ttl_max
+	
+	self.speed = other.speed
+	self.speed_min = other.speed_min
+	self.speed_max = other.speed_max
 	
 	self.angle = other.angle 
 	self.angle_min = other.angle_min 
 	self.angle_max = other.angle_max 
+	
 	self.speedAngular = other.speedAngular 
 	self.speedAngular_min = other.speedAngular_min 
 	self.speedAngular_max = other.speedAngular_max 
+	
 	self.speedGrowth = other.speedGrowth 
 	self.speedGrowth_min = other.speedGrowth_min 
 	self.speedGrowth_max = other.speedGrowth_max 
@@ -127,15 +129,18 @@ function SubParticleSystem:copyFrom(other)
 	self.decay = other.decay 
 	self.decay_min = other.decay_min 
 	self.decay_max = other.decay_max 
-	self.decayAngular = other.decayAngular 
-	self.decayAngular_min = other.decayAngular_min 
-	self.decayAngular_max = other.decayAngular_max 
-	self.decayGrowth = other.decayGrowth 
-	self.decayGrowth_min = other.decayGrowth_min 
-	self.decayGrowth_max = other.decayGrowth_max 
-	self.decayAlpha = other.decayAlpha 
-	self.decayAlpha_min = other.decayAlpha_min 
-	self.decayAlpha_max = other.decayAlpha_max 
+	
+	self.decayAngular = other.decayAngular
+	self.decayAngular_min = other.decayAngular_min
+	self.decayAngular_max = other.decayAngular_max
+	
+	self.decayGrowth = other.decayGrowth
+	self.decayGrowth_min = other.decayGrowth_min
+	self.decayGrowth_max = other.decayGrowth_max
+	
+	self.decayAlpha = other.decayAlpha
+	self.decayAlpha_min = other.decayAlpha_min
+	self.decayAlpha_max = other.decayAlpha_max
 end
 --
 function SubParticleSystem:draw(id)
@@ -167,8 +172,8 @@ function SubParticleSystem:draw(id)
 		self.view:draw(self.particles)
 		ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
 		
-		
 		self.color, self.alpha = ui:colorEdit4("Color##"..id, self.color, self.alpha)
+		
 		if (ui:treeNode("XPos##"..id)) then
 			self.xPos = ui:sliderFloat("XPos##"..id, self.xPos, 0, 1)
 			self.xPos_min, self.xPos_max = ui:sliderFloat2("Randomize##XPos"..id, self.xPos_min, self.xPos_max, -0.5, 0.5)
@@ -179,6 +184,7 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("YPos##"..id)) then
 			self.yPos = ui:sliderFloat("YPos##"..id, self.yPos, 0, 1)
 			self.yPos_min, self.yPos_max = ui:sliderFloat2("Randomize##YPos"..id, self.yPos_min, self.yPos_max, -0.5, 0.5)
@@ -189,6 +195,7 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("Size##"..id)) then
 			self.size = ui:sliderFloat("Size##"..id, self.size, 0, 256)
 			self.size_min, self.size_max = ui:sliderFloat2("Randomize##Size"..id, self.size_min, self.size_max, 0, 128)
@@ -199,7 +206,8 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
-		if (ui:treeNode("Ttl##"..id)) then
+		
+		if (ui:treeNode("TTL##"..id)) then
 			self.ttl = ui:sliderInt("Ttl##"..id, self.ttl, 0, 1800)
 			self.ttl_min, self.ttl_max = ui:sliderFloat2("Randomize##Ttl"..id, self.ttl_min, self.ttl_max, 0, 900)
 			if (ui:button("Reset##Ttl"..id, -1)) then
@@ -209,28 +217,31 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
-		if (ui:treeNode("SpeedX##"..id)) then
-			self.speedX = ui:sliderFloat("SpeedX##"..id, self.speedX, -8, 8)
-			self.speedX_min, self.speedX_max = ui:sliderFloat2("Randomize##SpeedX"..id, self.speedX_min, self.speedX_max, -8, 8)
-			if (ui:button("Reset##SpeedX"..id, -1)) then
-				self.speedX = 0
-				self.speedX_min = 0
-				self.speedX_max = 0
+		
+		if (ui:treeNode("Speed##"..id)) then
+			self.speed = ui:sliderFloat("Speed##"..id, self.speed, -8, 8)
+			self.speed_min, self.speed_max = ui:sliderFloat2("Randomize##SpeedX"..id, self.speed_min, self.speed_max, -8, 8)
+			if (ui:button("Reset##Speed"..id, -1)) then
+				self.speed = 0
+				self.speed_min = 0
+				self.speed_max = 0
 			end
 			ui:treePop()
 		end
-		if (ui:treeNode("SpeedY##"..id)) then
-			self.speedY = ui:sliderFloat("SpeedY##"..id, self.speedY, -8, 8)
-			self.speedY_min, self.speedY_max = ui:sliderFloat2("Randomize##SpeedY"..id, self.speedY_min, self.speedY_max, -8, 8)
-			if (ui:button("Reset##SpeedY"..id, -1)) then
-				self.speedY = 0
-				self.speedY_min = 0
-				self.speedY_max = 0
-			end
+		
+		if (ui:treeNode("Direction##"..id)) then
+			self.direction = ui:dial("##DirectionLabel"..id, self.direction, 64, toDeg, 360)
 			ui:treePop()
 		end
+		
+		if (ui:treeNode("Spread##"..id)) then
+			self.spread = ui:spread("##SpreadLabel"..id, self.spread, 64, toDeg, 180, ^<self.direction)
+			ui:treePop()
+		end
+		
 		if (ui:treeNode("Angle##"..id)) then
-			self.angle = ui:sliderFloat("Angle##"..id, self.angle, 0, 360)
+			self.angle = ui:dial("##AngleLabel"..id, self.angle, 64, 1, PI2)
+			--self.angle = ui:sliderFloat("Angle##"..id, self.angle, 0, 360)
 			self.angle_min, self.angle_max = ui:sliderFloat2("Randomize##Angle"..id, self.angle_min, self.angle_max, 0, 360)
 			if (ui:button("Reset##Angle"..id, -1)) then
 				self.angle = 0
@@ -239,6 +250,7 @@ function SubParticleSystem:draw(id)
 			end
 			ui:treePop()
 		end
+		
 		if (ui:treeNode("SpeedAngular##"..id)) then
 			self.speedAngular = ui:sliderFloat("SpeedAngular##"..id, self.speedAngular, -2, 2)
 			self.speedAngular_min, self.speedAngular_max = ui:sliderFloat2("Randomize##SpeedAngular"..id, self.speedAngular_min, self.speedAngular_max, -0.5, 0.5)

@@ -1,4 +1,5 @@
 --!NOEXEC
+local BLEND_MODES = {"None", Sprite.ADD, Sprite.ALPHA, Sprite.MULTIPLY, Sprite.NO_ALPHA, Sprite.SCREEN}
 local ui = UI
 local GameData = Game
 
@@ -23,6 +24,37 @@ function EditorScene:init()
 	self.showCombinedResult = true
 	self.showLog = false
 	self.showStyleEditor = false
+	
+	self.image = nil
+	self.imageName = ""
+	self.blendMode = 0
+	
+	
+	self:loadImages("|R|gfx")
+end
+--
+function EditorScene:loadImages(dir)
+	self.images = {}
+	
+	for entry in lfs.dir(dir) do
+		if (entry ~= "." and entry ~= "..") then
+			local path = dir.."/"..entry
+			local attributes = lfs.attributes(path)
+			if (attributes.mode == "file") then 
+				local ext = entry:match("(%.[^/]*)")
+				if (ext == ".jpg" or ext == ".jpeg" or ext == ".png") then 
+					self.images[#self.images + 1] = {
+						texture = Texture.new(path, true),
+						name = entry,
+						path = path,
+						ext = ext
+					}
+				end
+			else
+				self:loadImages(path)
+			end
+		end
+	end
 end
 --
 function EditorScene:drawGUI(e)
@@ -133,9 +165,36 @@ function EditorScene:createDock(ui, dockspace_id)
 end
 --
 function EditorScene:drawProperties()
+	if (self.image) then 
+		ui:scaledImage(self.image, 32, 32)
+	end
+	
+	if (ui:beginCombo("Image##MAIN", self.imageName)) then 
+		for i,v in ipairs(self.images) do 
+			if (ui:scaledImageButtonWithText(v.texture, v.name .. "##MAIN", 20, 20)) then 
+				self.image = v.texture
+				self.imageName = v.name
+				
+				self.particleSystem:setTexture(v.texture)
+			end
+		end
+		ui:endCombo()
+	end
+	
+	local blendModeChanged = false
+	self.blendMode, blendModeChanged = ui:combo("Blend mode##MAIN", self.blendMode, BLEND_MODES)
+	
+	if (blendModeChanged) then 
+		if (self.blendMode == 0) then 
+			self.particleSystem:clearBlendMode()
+		else
+			self.particleSystem:setBlendMode(BLEND_MODES[self.blendMode + 1])
+		end
+	end
+	
 	if (ui:button("+ add emitter", -1)) then 
 		GameData.EmitterID += 1
-		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID)
+		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID, self.images)
 		self.subParticles[#self.subParticles + 1] = sub
 	end
 	ui:separator()

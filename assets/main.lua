@@ -32,7 +32,7 @@ require "EditorScene"
 require "SubParticleSystem"
 stage:addChild(EditorScene.new())
 
---[[]]
+--[[
 local data = {
 	-- slider, name, initValue, initMin, initMax, valueMin, valueMax, randomMin, randomMax
 	{"Float", "xPos", 0.5, 0, 0, 0, 1, -0.5, 0.5},

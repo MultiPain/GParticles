@@ -1,5 +1,11 @@
 require "ImGui_beta"
+require "lfs"
+
 local random = math.random
+local cos = math.cos
+local sin = math.sin
+
+PI2 @ 6.28318530718
 
 Game = {
 	-- Screen details
@@ -17,6 +23,10 @@ Options = {
 	PREVIEW_SIZE = 64,
 }
 
+function math.clamp(v, min, max)
+	return (v<>min)><max
+end
+
 function frandom(min, max)
 	if (not max) then 
 		max = min
@@ -27,6 +37,14 @@ end
 
 function addParticles(particleSystem, subSystem, w, h, scale)
 	scale = scale or 1
+	local speed = subSystem.speed + random(subSystem.speed_min, subSystem.speed_max)
+	local dir = subSystem.direction
+	if (subSystem.spread > 0) then 
+		dir += frandom(-subSystem.spread, subSystem.spread)
+	end
+	local theta = ^<dir
+	local speedX = cos(theta) * speed
+	local speedY = sin(theta) * speed
 	particleSystem:addParticles{{
 		x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w,
 		y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h,
@@ -34,8 +52,8 @@ function addParticles(particleSystem, subSystem, w, h, scale)
 		color = subSystem.color,
 		alpha = subSystem.alpha,
 		ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max),
-		speedX = subSystem.speedX + random(subSystem.speedX_min, subSystem.speedX_max),
-		speedY = subSystem.speedY + random(subSystem.speedY_min, subSystem.speedY_max),
+		speedX = speedX,
+		speedY = speedY,
 		
 		angle = subSystem.angle + random(subSystem.angle_min, subSystem.angle_max),
 		speedAngular = subSystem.speedAngular + random(subSystem.speedAngular_min, subSystem.speedAngular_max),
