@@ -30,7 +30,11 @@ function EditorScene:init()
 	self.image = nil
 	self.imageName = ""
 	self.blendMode = 0
-	
+	self.bgColor = 0
+	self.bgAlpha = 0
+	self.colorTransform = 0xffffff
+	self.colorTransformAlpha = 1
+	self.spawnRate = 1
 	
 	self:loadImages("|R|gfx")
 end
@@ -117,11 +121,11 @@ function EditorScene:drawGUI(e)
 			
 			for i,ps in ipairs(self.subParticles) do 
 				if (ps.visible) then 
-					addParticles(self.particleSystem, ps, self.rtOriginW, self.rtOriginH)
+					addParticles(self.particleSystem, ps, self.rtOriginW, self.rtOriginH, 1, self.spawnRate)
 				end
 			end
 			
-			self.view:clear(0, 0)
+			self.view:clear(self.bgColor, self.bgAlpha)
 			self.view:draw(self.particleSystem)
 			ui:scaledImage(self.view, w, h, nil, nil, 0, 1)
 		elseif (self.activePS) then
@@ -153,18 +157,44 @@ function EditorScene:drawGUI(e)
 	ui:endFrame()
 end
 --
+function EditorScene:changeEmitters(callback)
+	for i,ps in ipairs(self.subParticles) do 
+		callback(ps)
+	end
+end
+--
+function EditorScene:setTexture(texture, name)
+	self.image = texture
+	self.imageName = name
+	
+	if (not texture) then 
+		self.particleSystem:clearTexture()
+	else
+		self.particleSystem:setTexture(texture)
+	end
+	
+	self:changeEmitters(function(ps)
+		if (not texture) then 
+			ps.particles:clearTexture()
+		else
+			ps.particles:setTexture(texture)
+		end
+	end)
+end
+--
 function EditorScene:drawProperties()
 	if (self.image) then 
 		ui:scaledImage(self.image, 32, 32)
+		ui:sameLine()
+		if (ui:button(ICO_X.."##MAIN")) then 
+			self:setTexture(nil, "")
+		end
 	end
 	
 	if (ui:beginCombo("Image##MAIN", self.imageName)) then 
 		for i,v in ipairs(self.images) do 
 			if (ui:scaledImageButtonWithText(v.texture, v.name .. "##MAIN", 20, 20)) then 
-				self.image = v.texture
-				self.imageName = v.name
-				
-				self.particleSystem:setTexture(v.texture)
+				self:setTexture(v.texture, v.name)
 			end
 		end
 		ui:endCombo()
@@ -176,14 +206,34 @@ function EditorScene:drawProperties()
 	if (blendModeChanged) then 
 		if (self.blendMode == 0) then 
 			self.particleSystem:clearBlendMode()
+			self:changeEmitters(function(ps)
+				ps.particles:clearBlendMode()
+			end)
 		else
 			self.particleSystem:setBlendMode(BLEND_MODES[self.blendMode + 1])
+			self:changeEmitters(function(ps)
+				ps.particles:setBlendMode(BLEND_MODES[self.blendMode + 1])
+			end)
 		end
+	end	
+	ui:separator()
+	
+	self.spawnRate = ui:sliderInt("Spawn rate##MAIN", self.spawnRate, 1, 1000)	
+	ui:separator()
+	
+	self.bgColor, self.bgAlpha = ui:colorEdit4("BG color##MAIN", self.bgColor, self.bgAlpha, COLOR_PICKER_FLAGS)
+	
+	local colorChanged = false
+	self.colorTransform, self.colorTransformAlpha, colorChanged = ui:colorEdit4("Color transform##MAIN", self.colorTransform, self.colorTransformAlpha)
+	if (colorChanged) then 
+		local r, g, b = ui:colorConvertHEXtoRGB(self.colorTransform)
+		self.particleSystem:setColorTransform(r, g, b, self.colorTransformAlpha)
 	end
+	ui:separator()
 	
 	if (ui:button("Add emitter", -1)) then 
 		GameData.EmitterID += 1
-		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID, self.images)
+		local sub = SubParticleSystem.new("Emitter"..GameData.EmitterID, self)
 		self.subParticles[#self.subParticles + 1] = sub
 	end
 	ui:separator()

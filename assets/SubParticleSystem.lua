@@ -4,9 +4,11 @@ local toDeg = 180 / math.pi
 
 SubParticleSystem = Core.class()
 
-function SubParticleSystem:init(name)
+function SubParticleSystem:init(name, scene)
 	self.name = name
 	self.tmpName = name
+	
+	self.parent = scene
 	
 	self.visible = true
 	self.delete = false
@@ -63,56 +65,27 @@ function SubParticleSystem:dragAndDrop(id)
 end
 --
 function SubParticleSystem:copyFrom(other)
-	self.color = other.color
-	self.alpha = other.alpha
+	self.growDown = other.growDown 
+	self.fade = other.fade 
 	
-	self.xPos = other.xPos
-	self.xPos_min = other.xPos_min
-	self.xPos_max = other.xPos_max
+	self.direction = other.direction 
+	self.spread = other.spread 
 	
-	self.yPos = other.yPos
-	self.yPos_min = other.yPos_min
-	self.yPos_max = other.yPos_max
+	self.color = other.color 
+	self.alpha = other.alpha 
 	
-	self.size = other.size
-	self.size_min = other.size_min
-	self.size_max = other.size_max
-	
-	self.ttl = other.ttl
-	self.ttl_min = other.ttl_min
-	self.ttl_max = other.ttl_max
-	
-	self.speed = other.speed
-	self.speed_min = other.speed_min
-	self.speed_max = other.speed_max
-	
-	self.angle = other.angle 
-	self.angle_min = other.angle_min 
-	self.angle_max = other.angle_max 
-	
-	self.speedAngular = other.speedAngular 
-	self.speedAngular_min = other.speedAngular_min 
-	self.speedAngular_max = other.speedAngular_max 
-	
-	self.speedGrowth = other.speedGrowth 
-	self.speedGrowth_min = other.speedGrowth_min 
-	self.speedGrowth_max = other.speedGrowth_max 
-	
-	self.decay = other.decay 
-	self.decay_min = other.decay_min 
-	self.decay_max = other.decay_max 
-	
-	self.decayAngular = other.decayAngular
-	self.decayAngular_min = other.decayAngular_min
-	self.decayAngular_max = other.decayAngular_max
-	
-	self.decayGrowth = other.decayGrowth
-	self.decayGrowth_min = other.decayGrowth_min
-	self.decayGrowth_max = other.decayGrowth_max
-	
-	self.decayAlpha = other.decayAlpha
-	self.decayAlpha_min = other.decayAlpha_min
-	self.decayAlpha_max = other.decayAlpha_max
+	self.xPos = other.xPos					self.xPos_min			= other.xPos_min  		 self.xPos_max = other.xPos_max 
+	self.yPos = other.yPos					self.yPos_min			= other.yPos_min  		 self.yPos_max = other.yPos_max 
+	self.size = other.size  				self.size_min			= other.size_min  		 self.size_max = other.size_max 
+	self.ttl = other.ttl  					self.ttl_min			= other.ttl_min  		 self.ttl_max = other.ttl_max 
+	self.speed = other.speed  				self.speed_min			= other.speed_min  		 self.speed_max = other.speed_max 
+	self.angle = other.angle  				self.angle_min			= other.angle_min  		 self.angle_max = other.angle_max 
+	self.speedAngular = other.speedAngular	self.speedAngular_min	= other.speedAngular_min self.speedAngular_max = other.speedAngular_max 
+	self.speedGrowth = other.speedGrowth	self.speedGrowth_min	= other.speedGrowth_min  self.speedGrowth_max = other.speedGrowth_max 
+	self.decay = other.decay				self.decay_min			= other.decay_min  		 self.decay_max = other.decay_max 
+	self.decayAngular = other.decayAngular  self.decayAngular_min	= other.decayAngular_min self.decayAngular_max = other.decayAngular_max 
+	self.decayGrowth = other.decayGrowth  	self.decayGrowth_min	= other.decayGrowth_min  self.decayGrowth_max = other.decayGrowth_max 
+	self.decayAlpha = other.decayAlpha  	self.decayAlpha_min		= other.decayAlpha_min   self.decayAlpha_max	= other.decayAlpha_max 
 end
 --
 function SubParticleSystem:draw(id)
@@ -142,12 +115,12 @@ function SubParticleSystem:draw(id)
 		
 		local w = ui:getContentRegionAvail() - 5
 		local SIZE = Options.PREVIEW_SIZE
-		addParticles(self.particles, self, SIZE, SIZE, 0.2)
-		self.view:clear(0,0)
+		addParticles(self.particles, self, SIZE, SIZE, 0.2, self.parent.spawnRate)
+		self.view:clear(self.parent.bgColor, self.parent.bgAlpha)
 		self.view:draw(self.particles)
 		ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
 		
-		self.color, self.alpha = ui:colorEdit4("Color##"..id, self.color, self.alpha)
+		self.color, self.alpha = ui:colorEdit4("Color##"..id, self.color, self.alpha, COLOR_PICKER_FLAGS)
 		
 		if (ui:treeNode("XPos##"..id)) then
 			self.xPos = ui:sliderFloat("XPos##"..id, self.xPos, 0, 1)

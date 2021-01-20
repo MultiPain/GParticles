@@ -7,6 +7,8 @@ local sin = math.sin
 
 PI2 @ 6.28318530718
 
+COLOR_PICKER_FLAGS = ImGui.ColorEditFlags_AlphaPreviewHalf | ImGui.ColorEditFlags_AlphaPreview
+
 ICO_PARTICLES = utf8.char(0xE3A5)
 ICO_TRASH = utf8.char(0xE872)
 ICO_ON = utf8.char(0xE8F4)
@@ -14,6 +16,7 @@ ICO_OFF = utf8.char(0xE8F5)
 ICO_PEN = utf8.char(0xE3C9)
 ICO_SAVE = utf8.char(0xE161)
 ICO_NEW = utf8.char(0xE05E)
+ICO_X = utf8.char(0xE14C)
 
 Game = {
 	-- Screen details
@@ -29,6 +32,7 @@ Game = {
 -- Updates after program restarts
 Options = {
 	PREVIEW_SIZE = 128,
+	HUE_WHEEL = false,
 }
 
 function math.clamp(v, min, max)
@@ -43,34 +47,38 @@ function frandom(min, max)
 	return min + random() * (max - min)
 end
 
-function addParticles(particleSystem, subSystem, w, h, scale)
+function addParticles(particleSystem, subSystem, w, h, scale, rate)
 	scale = scale or 1
-	local speed = subSystem.speed + random(subSystem.speed_min, subSystem.speed_max)
-	local dir = subSystem.direction
-	if (subSystem.spread > 0) then 
-		dir += frandom(-subSystem.spread, subSystem.spread)
+	rate = rate or 1
+	
+	for i = 1, rate do 
+		local speed = subSystem.speed + random(subSystem.speed_min, subSystem.speed_max)
+		local dir = subSystem.direction
+		if (subSystem.spread > 0) then 
+			dir += frandom(-subSystem.spread, subSystem.spread)
+		end
+		local theta = ^<dir
+		local speedX = cos(theta) * speed
+		local speedY = sin(theta) * speed
+		particleSystem:addParticles{{
+			x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w,
+			y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h,
+			size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale,
+			color = subSystem.color,
+			alpha = subSystem.alpha,
+			ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max),
+			speedX = speedX,
+			speedY = speedY,
+			
+			angle = subSystem.angle + random(subSystem.angle_min, subSystem.angle_max),
+			speedAngular = subSystem.speedAngular + random(subSystem.speedAngular_min, subSystem.speedAngular_max),
+			speedGrowth = subSystem.speedGrowth + random(subSystem.speedGrowth_min, subSystem.speedGrowth_max),
+			decay = subSystem.decay + random(subSystem.decay_min, subSystem.decay_max),
+			decayAngular = subSystem.decayAngular + random(subSystem.decayAngular_min, subSystem.decayAngular_max),
+			decayGrowth = subSystem.decayGrowth + random(subSystem.decayGrowth_min, subSystem.decayGrowth_max),
+			decayAlpha = subSystem.decayAlpha + random(subSystem.decayAlpha_min, subSystem.decayAlpha_max),
+		}}
 	end
-	local theta = ^<dir
-	local speedX = cos(theta) * speed
-	local speedY = sin(theta) * speed
-	particleSystem:addParticles{{
-		x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w,
-		y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h,
-		size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale,
-		color = subSystem.color,
-		alpha = subSystem.alpha,
-		ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max),
-		speedX = speedX,
-		speedY = speedY,
-		
-		angle = subSystem.angle + random(subSystem.angle_min, subSystem.angle_max),
-		speedAngular = subSystem.speedAngular + random(subSystem.speedAngular_min, subSystem.speedAngular_max),
-		speedGrowth = subSystem.speedGrowth + random(subSystem.speedGrowth_min, subSystem.speedGrowth_max),
-		decay = subSystem.decay + random(subSystem.decay_min, subSystem.decay_max),
-		decayAngular = subSystem.decayAngular + random(subSystem.decayAngular_min, subSystem.decayAngular_max),
-		decayGrowth = subSystem.decayGrowth + random(subSystem.decayGrowth_min, subSystem.decayGrowth_max),
-		decayAlpha = subSystem.decayAlpha + random(subSystem.decayAlpha_min, subSystem.decayAlpha_max),
-	}}
 end
 
 function loadStyles(imgui)

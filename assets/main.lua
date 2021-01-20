@@ -6,6 +6,7 @@ io = ui:getIO()
 io:setIniFilename(nil) -- disable INI file (new API)
 io:addConfigFlags(ImGui.ConfigFlags_DockingEnable)
 local FontAtlas = io:getFonts()
+--local cour = FontAtlas:addFont("cour.ttf", 16)
 local icons = FontAtlas:addFont("MaterialIcons-Regular.ttf", 16, {
 	glyphs = {
 		ranges = {{0xE3A2,0xE3A5}},
@@ -17,6 +18,7 @@ local icons = FontAtlas:addFont("MaterialIcons-Regular.ttf", 16, {
 			0xE161, -- save
 			0xE05E, -- new
 			0xE3A5, -- particles
+			0xE14C, -- X
 		},
 	},
 	oversampleH = 2,
