@@ -1,3 +1,14 @@
+-- ImGui custom widgets
+
+local sin = math.sin
+local cos = math.cos
+local atan2 = math.atan2
+local pi = math.pi
+local acos = math.acos
+local sqrt = math.sqrt
+local length = math.length
+local clamp = math.clamp
+--
 function ImGui:anhorPoint(id, w, h, minX, maxX, minY, maxY)
 	minX = minX or 0
 	maxX = maxX or 1
@@ -8,16 +19,7 @@ function ImGui:anhorPoint(id, w, h, minX, maxX, minY, maxY)
 	
 	self:popID()
 end
-
-local sin = math.sin
-local cos = math.cos
-local atan2 = math.atan2
-local pi = math.pi
-local acos = math.acos
-local sqrt = math.sqrt
-local length = math.length
-local clamp = math.clamp
-
+--
 function ImGui:dial(label, value, size, fac, max_v, offset)
 	size = size or 36
 	fac = fac or pi * 2
@@ -76,7 +78,7 @@ function ImGui:dial(label, value, size, fac, max_v, offset)
 	self:popItemWidth()
 	return value, touched
 end
-
+--
 function ImGui:spread(label, value, size, fac, max_v, adjust, offset)
 	size = size or 36
 	fac = fac or pi * 2

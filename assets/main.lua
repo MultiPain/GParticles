@@ -1,25 +1,25 @@
 IO = io
-
+local chars = {
+	0xE872, -- trash
+	0xE8F4, -- on
+	0xE8F5, -- off
+	0xE3C9, -- pen
+	0xE161, -- save
+	0xE05E, -- new
+	0xE3A5, -- particles
+	0xE14C, -- X
+}
 local ui = ImGui.new() 
 ui:setAutoUpdateCursor(true)
 io = ui:getIO()
 io:setIniFilename(nil) -- disable INI file (new API)
 io:addConfigFlags(ImGui.ConfigFlags_DockingEnable)
-local FontAtlas = io:getFonts()
---local cour = FontAtlas:addFont("cour.ttf", 16)
-local icons = FontAtlas:addFont("MaterialIcons-Regular.ttf", 16, {
+io:addConfigFlags(ImGui.ConfigFlags_IsTouchScreen)
+local fonts = io:getFonts()
+fonts:addFont("MaterialIcons-Regular.ttf", 16, {
 	glyphs = {
-		ranges = {{0xE3A2,0xE3A5}},
-		chars = {
-			0xE872, -- trash
-			0xE8F4, -- on
-			0xE8F5, -- off
-			0xE3C9, -- pen
-			0xE161, -- save
-			0xE05E, -- new
-			0xE3A5, -- particles
-			0xE14C, -- X
-		},
+		ranges = {{0xE3A2,0xE3A5,0}},
+		chars = chars,
 	},
 	oversampleH = 2,
 	oversampleV = 1,
@@ -28,7 +28,7 @@ local icons = FontAtlas:addFont("MaterialIcons-Regular.ttf", 16, {
 	pixelSnapH = true,
 	mergeMode = true,
 })
-FontAtlas:bake()
+fonts:build()
 
 loadStyles(ui)
 UI = ui

@@ -12,8 +12,10 @@ function SubParticleSystem:init(name, scene)
 	
 	self.visible = true
 	self.delete = false
-	self.growDown = false
-	self.fade = ""
+	self.localSpace = true
+	self.showPreview = true
+	self.growDown = false -- TODO
+	self.fade = "" -- TODO
 	
 	self.direction = 0
 	self.spread = 0
@@ -33,6 +35,11 @@ function SubParticleSystem:init(name, scene)
 	self.decayAngular = 1	self.decayAngular_min = 0 	self.decayAngular_max = 0
 	self.decayGrowth = 1	self.decayGrowth_min = 0 	self.decayGrowth_max = 0
 	self.decayAlpha = 1		self.decayAlpha_min = 0 	self.decayAlpha_max = 0
+	
+	self.xBound_max = 1
+	self.xRndBound_min = -0.5	self.xRndBound_max =  0.5
+	self.yBound_max = 1
+	self.yRndBound_min = -0.5	self.yRndBound_max =  0.5
 	
 	self.particles = Particles.new()
 	
@@ -74,17 +81,17 @@ function SubParticleSystem:copyFrom(other)
 	self.color = other.color 
 	self.alpha = other.alpha 
 	
-	self.xPos = other.xPos					self.xPos_min			= other.xPos_min  		 self.xPos_max = other.xPos_max 
-	self.yPos = other.yPos					self.yPos_min			= other.yPos_min  		 self.yPos_max = other.yPos_max 
-	self.size = other.size  				self.size_min			= other.size_min  		 self.size_max = other.size_max 
-	self.ttl = other.ttl  					self.ttl_min			= other.ttl_min  		 self.ttl_max = other.ttl_max 
-	self.speed = other.speed  				self.speed_min			= other.speed_min  		 self.speed_max = other.speed_max 
-	self.angle = other.angle  				self.angle_min			= other.angle_min  		 self.angle_max = other.angle_max 
-	self.speedAngular = other.speedAngular	self.speedAngular_min	= other.speedAngular_min self.speedAngular_max = other.speedAngular_max 
-	self.speedGrowth = other.speedGrowth	self.speedGrowth_min	= other.speedGrowth_min  self.speedGrowth_max = other.speedGrowth_max 
-	self.decay = other.decay				self.decay_min			= other.decay_min  		 self.decay_max = other.decay_max 
-	self.decayAngular = other.decayAngular  self.decayAngular_min	= other.decayAngular_min self.decayAngular_max = other.decayAngular_max 
-	self.decayGrowth = other.decayGrowth  	self.decayGrowth_min	= other.decayGrowth_min  self.decayGrowth_max = other.decayGrowth_max 
+	self.xPos = other.xPos					self.xPos_min			= other.xPos_min  		 self.xPos_max			= other.xPos_max 
+	self.yPos = other.yPos					self.yPos_min			= other.yPos_min  		 self.yPos_max			= other.yPos_max 
+	self.size = other.size  				self.size_min			= other.size_min  		 self.size_max			= other.size_max 
+	self.ttl = other.ttl  					self.ttl_min			= other.ttl_min  		 self.ttl_max			= other.ttl_max 
+	self.speed = other.speed  				self.speed_min			= other.speed_min  		 self.speed_max			= other.speed_max 
+	self.angle = other.angle  				self.angle_min			= other.angle_min  		 self.angle_max			= other.angle_max 
+	self.speedAngular = other.speedAngular	self.speedAngular_min	= other.speedAngular_min self.speedAngular_max	= other.speedAngular_max 
+	self.speedGrowth = other.speedGrowth	self.speedGrowth_min	= other.speedGrowth_min  self.speedGrowth_max	= other.speedGrowth_max 
+	self.decay = other.decay				self.decay_min			= other.decay_min  		 self.decay_max			= other.decay_max 
+	self.decayAngular = other.decayAngular  self.decayAngular_min	= other.decayAngular_min self.decayAngular_max	= other.decayAngular_max 
+	self.decayGrowth = other.decayGrowth  	self.decayGrowth_min	= other.decayGrowth_min  self.decayGrowth_max	= other.decayGrowth_max 
 	self.decayAlpha = other.decayAlpha  	self.decayAlpha_min		= other.decayAlpha_min   self.decayAlpha_max	= other.decayAlpha_max 
 end
 --
@@ -113,29 +120,54 @@ function SubParticleSystem:draw(id)
 		self.delete = ui:button("Delete", -1)
 		ui:popID()
 		
-		local w = ui:getContentRegionAvail() - 5
-		local SIZE = Options.PREVIEW_SIZE
-		addParticles(self.particles, self, SIZE, SIZE, 0.2, self.parent.spawnRate)
-		self.view:clear(self.parent.bgColor, self.parent.bgAlpha)
-		self.view:draw(self.particles)
-		ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
+		self.showPreview = ui:checkbox("Show preview##"..id, self.showPreview)
+		if (self.showPreview) then 
+			local w = ui:getContentRegionAvail() - 5
+			local SIZE = Options.PREVIEW_SIZE
+			addParticles(self.particles, self, SIZE, SIZE, 0.2, self.parent.spawnRate, self.localSpace)
+			self.view:clear(self.parent.bgColor, self.parent.bgAlpha)
+			self.view:draw(self.particles)
+			ui:scaledImage(self.view, w, SIZE, nil, nil, 0, 1)
+		end
 		
 		self.color, self.alpha = ui:colorEdit4("Color##"..id, self.color, self.alpha, COLOR_PICKER_FLAGS)
 		
-		if (ui:treeNode("XPos##"..id)) then
-			self.xPos = ui:sliderFloat("XPos##"..id, self.xPos, 0, 1)
-			self.xPos_min, self.xPos_max = ui:sliderFloat2("Randomize##XPos"..id, self.xPos_min, self.xPos_max, -0.5, 0.5)
+		if (ui:treeNode("Position##"..id)) then
+			local localSpaceChanged = false
+			self.localSpace, localSpaceChanged = ui:checkbox("Local space##"..id, self.localSpace)
+			if (localSpaceChanged) then 
+				if (self.localSpace) then 
+					self.xBound_max = 1
+					self.yBound_max = 1
+					
+					self.xRndBound_min = -0.5
+					self.xRndBound_max =  0.5
+					self.yRndBound_min = -0.5
+					self.yRndBound_max =  0.5
+				else
+					local SIZE = Options.PREVIEW_SIZE
+					self.xBound_max = SIZE
+					self.yBound_max = SIZE
+					
+					self.xRndBound_min = 0
+					self.xRndBound_max = SIZE
+					self.yRndBound_min = 0
+					self.yRndBound_max = SIZE
+				end
+			end
+			
+			ui:text("> X")
+			self.xPos = ui:sliderFloat("XPos##"..id, self.xPos, 0, self.xBound_max)
+			self.xPos_min, self.xPos_max = ui:sliderFloat2("Randomize##XPos"..id, self.xPos_min, self.xPos_max, self.xRndBound_min, self.xRndBound_max)
 			if (ui:button("Reset##XPos"..id, -1)) then
 				self.xPos = 0.5
 				self.xPos_min = 0
 				self.xPos_max = 0
 			end
-			ui:treePop()
-		end
-		
-		if (ui:treeNode("YPos##"..id)) then
-			self.yPos = ui:sliderFloat("YPos##"..id, self.yPos, 0, 1)
-			self.yPos_min, self.yPos_max = ui:sliderFloat2("Randomize##YPos"..id, self.yPos_min, self.yPos_max, -0.5, 0.5)
+			
+			ui:text("> Y")
+			self.yPos = ui:sliderFloat("YPos##"..id, self.yPos, 0, self.yBound_max)
+			self.yPos_min, self.yPos_max = ui:sliderFloat2("Randomize##YPos"..id, self.yPos_min, self.yPos_max, self.yRndBound_min, self.yRndBound_max)
 			if (ui:button("Reset##YPos"..id, -1)) then
 				self.yPos = 0.5
 				self.yPos_min = 0

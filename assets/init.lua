@@ -47,7 +47,7 @@ function frandom(min, max)
 	return min + random() * (max - min)
 end
 
-function addParticles(particleSystem, subSystem, w, h, scale, rate)
+function addParticles(particleSystem, subSystem, w, h, scale, rate, localSpace)
 	scale = scale or 1
 	rate = rate or 1
 	
@@ -58,11 +58,20 @@ function addParticles(particleSystem, subSystem, w, h, scale, rate)
 			dir += frandom(-subSystem.spread, subSystem.spread)
 		end
 		local theta = ^<dir
-		local speedX = cos(theta) * speed
-		local speedY = sin(theta) * speed
+		local speedX = cos(theta) * speed * scale
+		local speedY = sin(theta) * speed * scale
+		
+		local x = 0
+		if (localSpace) then 
+			x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w
+			y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h
+		else
+			x = subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)
+			y = subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)
+		end
 		particleSystem:addParticles{{
-			x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w,
-			y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h,
+			x = x,
+			y = y,
 			size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale,
 			color = subSystem.color,
 			alpha = subSystem.alpha,

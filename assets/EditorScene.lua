@@ -3,8 +3,8 @@ local BLEND_MODES = {"None", Sprite.ADD, Sprite.ALPHA, Sprite.MULTIPLY, Sprite.N
 local ui = UI
 local GameData = Game
 
-
 local MAIN_WINDOW_FLAGS = ImGui.WindowFlags_NoTitleBar | ImGui.WindowFlags_NoCollapse | ImGui.WindowFlags_NoResize | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoBringToFrontOnFocus | ImGui.WindowFlags_NoNavFocus | ImGui.WindowFlags_MenuBar
+local PARTICLES_TAB = "Particles "..ICO_PARTICLES
 
 EditorScene = Core.class(Sprite)
 
@@ -80,7 +80,7 @@ function EditorScene:drawGUI(e)
 		if (ui:beginMenuBar()) then 
 			if (ui:beginMenu("File")) then 
 				if (ui:menuItem("Open", "CTRL+O")) then 
-					
+					io:glogTest()
 				end
 				if (ui:menuItem("Save", "CTRL+S")) then 
 					
@@ -111,7 +111,7 @@ function EditorScene:drawGUI(e)
 	
 	ui:endWindow()
 	
-	if (ui:beginWindow("Particles", nil, ImGui.WindowFlags_NoBackground | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoScrollbar)) then
+	if (ui:beginWindow(PARTICLES_TAB, nil, ImGui.WindowFlags_NoBackground | ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoScrollbar)) then
 		local w, h = ui:getContentRegionAvail()	
 		if (self.showCombinedResult) then 		
 			--self.particleSystem:addParticles{
@@ -121,7 +121,7 @@ function EditorScene:drawGUI(e)
 			
 			for i,ps in ipairs(self.subParticles) do 
 				if (ps.visible) then 
-					addParticles(self.particleSystem, ps, self.rtOriginW, self.rtOriginH, 1, self.spawnRate)
+					addParticles(self.particleSystem, ps, self.rtOriginW, self.rtOriginH, 1, self.spawnRate, ps.localSpace)
 				end
 			end
 			
@@ -140,7 +140,13 @@ function EditorScene:drawGUI(e)
 		self.showLog = ui:showLog("Log", self.showLog, ImGui.WindowFlags_NoMove)
 	end
 	
-	if (ui:beginWindow("Emitters "..ICO_PARTICLES, nil, ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoResize)) then
+	if (ui:beginWindow("Options", nil, ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoResize)) then
+		
+	end
+    ui:endWindow()
+	
+	--ui:setNextWindowFocus()
+	if (ui:beginWindow("Emitters", nil, ImGui.WindowFlags_NoMove | ImGui.WindowFlags_NoResize)) then
 		self:drawProperties()
 	end
     ui:endWindow()
@@ -293,9 +299,10 @@ function EditorScene:createDock(ui, dockspace_id)
 	-- split right node into 2 (but in different direction), return top panel id
 	local dock_id_top = ui:dockBuilderSplitNode(dockspace_id, ImGui.Dir_Up, 0.7, nil, dockspace_id)
 
-	ui:dockBuilderDockWindow("Particles", dock_id_top)
+	ui:dockBuilderDockWindow(PARTICLES_TAB, dock_id_top)
 	ui:dockBuilderDockWindow("Log", dock_id_bottom)
-	ui:dockBuilderDockWindow("Emitters "..ICO_PARTICLES, dock_id_left)
+	ui:dockBuilderDockWindow("Emitters", dock_id_left)
+	ui:dockBuilderDockWindow("Options", dock_id_left)
 	ui:dockBuilderDockWindow("Style editor", dock_id_right)
 	ui:dockBuilderFinish(dockspace_id)
 end
