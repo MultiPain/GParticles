@@ -24,9 +24,13 @@ local showEditor = true
 local function onDrawGui(e)
 	ui:newFrame(e)
 	
-	if (onDrawGui) then 
+	if (showEditor) then 
 		local drawEditor = false
-		showEditor, drawEditor = editor:show("Particles editor v1.0", showEditor)
+		showEditor, drawEditor = ui:beginWindow("Particles editor v1.0", showEditor)
+		if (drawEditor) then 
+			editor:draw()
+		end
+		ui:endWindow()
 	end
 	
 	ui:render()

@@ -173,12 +173,10 @@ function ParticlesEditor:updateBlendMode()
 	end
 end
 --
-function ParticlesEditor:show(name, open, flags)
+function ParticlesEditor:draw()
 	local ui = self.ui
 	local io = self.io
 	local saveSettings = false
-	
-	open = ui:beginWindow(name, open, flags)
 	
 	if (ui:beginCombo("Image##MAIN", self.imageName)) then 
 		for i,v in ipairs(self.images) do 
@@ -233,11 +231,7 @@ function ParticlesEditor:show(name, open, flags)
 	end
 	ui:separator()
 	
-	ui:endWindow()
-	
 	if (saveSettings) then
 		self:saveSettings()
 	end
-	
-	return open
 end
