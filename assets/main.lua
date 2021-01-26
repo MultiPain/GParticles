@@ -18,7 +18,7 @@ onWindowResize()
 stage:addEventListener("applicationResize", onWindowResize)
 stage:addChild(ui)
 
-local editor = ParticlesEditor.new(ui)
+local editor = ParticlesEditor.new(ui, false)
 
 local showEditor = true
 local function onDrawGui(e)

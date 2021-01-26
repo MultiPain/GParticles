@@ -34,7 +34,7 @@ local function clamp(v, min, max)
 	return (v<>min)><max
 end
 --
-function ParticlesEditor:init(imgui)
+function ParticlesEditor:init(imgui, enableSaveSettings)
 	self.ui = imgui
 	self.io = self.ui:getIO()
 	
@@ -59,22 +59,21 @@ function ParticlesEditor:init(imgui)
 	})
 	fonts:build()
 	
-	self.showDemoWindow = false
+	self.enableSaveSettings = enableSaveSettings
 	
 	self.particles = Particles.new()
 	self:addChild(self.particles)
 	
 	self.emitters = {}
+	self.images = {}
 	
 	self.image = nil
 	self.imageName = ""
-	self.emitters = {}
 	self.blendMode = 0
 	self.colorTransform = 0xffffff
 	self.colorTransformAlpha = 1
 	self.spawnRate = 1
 	self.isPaused = false
-	self.images = {}
 	
 	self:loadImages("|R|"..PATH.."/images")
 	
@@ -110,6 +109,7 @@ function ParticlesEditor:loadSave()
 end
 --
 function ParticlesEditor:saveSettings()
+	if (not self.enableSaveSettings) then return end
 	if (not json) then require "json" end
 	local file = io.open("|D|"..SAVE_FILE_NAME, "w")
 	if (file) then 
@@ -145,7 +145,9 @@ function ParticlesEditor:addEmitter()
 	self.emitters[#self.emitters + 1] = Emitter.new()
 end
 --
-function ParticlesEditor:setTexture(texture, name)
+function ParticlesEditor:updateTexture(texture, name)
+	self.image = texture
+	self.imageName = name
 	if (texture) then 
 		self.particles:setTexture(texture)
 		for i,ps in ipairs(self.particles) do 
@@ -173,15 +175,23 @@ function ParticlesEditor:updateBlendMode()
 	end
 end
 --
+function ParticlesEditor:updateColorTransform()
+	local r, g, b = ui:colorConvertHEXtoRGB(self.colorTransform)
+	self.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
+	for i,ps in ipairs(self.particles) do 
+		ps.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
+	end
+end
+--
 function ParticlesEditor:draw()
 	local ui = self.ui
 	local io = self.io
 	local saveSettings = false
 	
-	if (ui:beginCombo("Image##MAIN", self.imageName)) then 
+	if (ui:beginCombo("Image##MAIN", self.imageName, ImGui.ComboFlags_NoArrowButton)) then 
 		for i,v in ipairs(self.images) do 
 			if (ui:scaledImageButtonWithText(v.texture, v.name .. "##MAIN", 20, 20)) then 
-				self:setTexture(v.texture, v.name)
+				self:updateTexture(v.texture, v.name)
 			end
 			if (ui:isItemHovered()) then
 				ui:beginTooltip()
@@ -190,6 +200,18 @@ function ParticlesEditor:draw()
 			end
 		end
 		ui:endCombo()
+	end
+	if (self.image) then 
+		ui:sameLine()
+		if (ui:button("X##MAIN_DELETE_IMAGE")) then 
+			self:updateTexture(nil, "")
+		end
+		
+		local w = ui:getContentRegionAvail()
+		ui:scaledImage(self.image, w, self.settings.previewSize)
+	else
+		local w = ui:getContentRegionAvail()
+		ui:dummy(w, self.settings.previewSize)
 	end
 	
 	local blendModeChanged = false
@@ -223,11 +245,7 @@ function ParticlesEditor:draw()
 	local colorChanged = false
 	self.colorTransform, self.colorTransformAlpha, colorChanged = ui:colorEdit4("Color transform##MAIN", self.colorTransform, self.colorTransformAlpha)
 	if (colorChanged) then 
-		local r, g, b = ui:colorConvertHEXtoRGB(self.colorTransform)
-		self.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
-		for i,ps in ipairs(self.particles) do 
-			ps.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
-		end
+		self:updateColorTransform()
 	end
 	ui:separator()
 	
