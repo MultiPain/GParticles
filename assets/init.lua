@@ -1,22 +1,8 @@
-require "ImGui_beta"
-require "lfs"
+PI2 @ 6.28318530718
 
 local random = math.random
 local cos = math.cos
 local sin = math.sin
-
-PI2 @ 6.28318530718
-
-COLOR_PICKER_FLAGS = ImGui.ColorEditFlags_AlphaPreviewHalf | ImGui.ColorEditFlags_AlphaPreview
-
-ICO_PARTICLES = utf8.char(0xE3A5)
-ICO_TRASH = utf8.char(0xE872)
-ICO_ON = utf8.char(0xE8F4)
-ICO_OFF = utf8.char(0xE8F5)
-ICO_PEN = utf8.char(0xE3C9)
-ICO_SAVE = utf8.char(0xE161)
-ICO_NEW = utf8.char(0xE05E)
-ICO_X = utf8.char(0xE14C)
 
 Game = {
 	-- Screen details
@@ -33,19 +19,8 @@ Game = {
 Options = {
 	PREVIEW_SIZE = 128,
 	HUE_WHEEL = false,
+	SHOW_PREVIEW_DEFAULT = false
 }
-
-function math.clamp(v, min, max)
-	return (v<>min)><max
-end
-
-function frandom(min, max)
-	if (not max) then 
-		max = min
-		min = 0
-	end
-	return min + random() * (max - min)
-end
 
 function addParticles(particleSystem, subSystem, w, h, scale, rate, localSpace)
 	scale = scale or 1
@@ -60,8 +35,14 @@ function addParticles(particleSystem, subSystem, w, h, scale, rate, localSpace)
 		local theta = ^<dir
 		local speedX = cos(theta) * speed * scale
 		local speedY = sin(theta) * speed * scale
+		local size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale
+		local ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max)
+		local decayAlpha = 0
+		local alpha = subSystem.alpha
+		local decayGrowth = 0
 		
 		local x = 0
+		local y = 0
 		if (localSpace) then 
 			x = (subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)) * w
 			y = (subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)) * h
@@ -69,13 +50,30 @@ function addParticles(particleSystem, subSystem, w, h, scale, rate, localSpace)
 			x = subSystem.xPos + frandom(subSystem.xPos_min, subSystem.xPos_max)
 			y = subSystem.yPos + frandom(subSystem.yPos_min, subSystem.yPos_max)
 		end
+		
+		
+		if (subSystem.fade == "") then
+			decayAlpha = subSystem.decayAlpha + random(subSystem.decayAlpha_min, subSystem.decayAlpha_max)
+		elseif (subSystem.fade == "IN") then
+			decayAlpha = 1.5
+			alpha = 0.01
+		else
+			decayAlpha = 1 - 4 / ttl
+		end
+		
+		if (subSystem.growDown) then 
+			decayGrowth = 1 - speed / ttl
+		else
+			decayGrowth = subSystem.decayGrowth + random(subSystem.decayGrowth_min, subSystem.decayGrowth_max)
+		end
+		
 		particleSystem:addParticles{{
 			x = x,
 			y = y,
-			size = (subSystem.size + random(subSystem.size_min, subSystem.size_max)) * scale,
+			size = size,
 			color = subSystem.color,
-			alpha = subSystem.alpha,
-			ttl = subSystem.ttl + random(subSystem.ttl_min, subSystem.ttl_max),
+			alpha = alpha,
+			ttl = ttl,
 			speedX = speedX,
 			speedY = speedY,
 			
@@ -84,11 +82,13 @@ function addParticles(particleSystem, subSystem, w, h, scale, rate, localSpace)
 			speedGrowth = subSystem.speedGrowth + random(subSystem.speedGrowth_min, subSystem.speedGrowth_max),
 			decay = subSystem.decay + random(subSystem.decay_min, subSystem.decay_max),
 			decayAngular = subSystem.decayAngular + random(subSystem.decayAngular_min, subSystem.decayAngular_max),
-			decayGrowth = subSystem.decayGrowth + random(subSystem.decayGrowth_min, subSystem.decayGrowth_max),
-			decayAlpha = subSystem.decayAlpha + random(subSystem.decayAlpha_min, subSystem.decayAlpha_max),
+			decayGrowth = decayGrowth,
+			decayAlpha = decayAlpha,
 		}}
 	end
 end
+
+
 
 function loadStyles(imgui)
 	local style = imgui:getStyle()
