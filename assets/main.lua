@@ -1,9 +1,11 @@
 application:setBackgroundColor(0x323232)
-
+require "ImGui_beta"
 require "ParticlesEditor"
+require "tablesDemo"
 
 local ui = ImGui.new() 
 ui:setAutoUpdateCursor(true)
+
 local IO = ui:getIO()
 --
 function onWindowResize()
@@ -24,6 +26,8 @@ local editor = ParticlesEditor.new(ui, false)
 local showEditor = true
 local function onDrawGui(e)
 	ui:newFrame(e)
+	
+	showDemoWindowTables(ui)
 	
 	if (showEditor) then 
 		local drawEditor = false
