@@ -1,5 +1,6 @@
-require "ParticlesEditor"
+application:setBackgroundColor(0x323232)
 
+require "ParticlesEditor"
 
 local ui = ImGui.new() 
 ui:setAutoUpdateCursor(true)

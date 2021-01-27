@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
- <properties osx_signingId="" ios_bundle="com.yourdomain.yourapp-ios" splash_h_image="" touchToMouse="1" osx_domain="giderosmobile.com" html5_fbinstant="0" encryptAssets="0" app_name="" fps="60" osx_bundle="com.yourdomain." html5_mem="256" macos_category="5" splash_v_image="" winrt_package="com.yourdomain.yourapp" exportMode="0" win_domain="giderosmobile.com" winrt_org="GiderosMobile" osx_installerId="" html5_pack="0" atv_bundle="com.yourdomain.yourapp-atv" osx_org="GiderosMobile" logicalWidth="320" html5_symbols="0" tv_icon="" disableSplash="0" splashScaleMode="0" vsync="0" windowWidth="0" architecture="0" iosDevice="0" version="1.0" macos_bundle="com.yourdomain.yourapp-macos" mouseTouchOrder="0" html5_wasm="0" mouseToTouch="1" mainluaOnly="0" version_code="1" app_icon="" scaleMode="0" build_number="1" windowHeight="0" autorotation="0" win_org="GiderosMobile" html5_crash="" logicalHeight="480" encryptCode="0" html5_host="" osx_category="5" retinaDisplay="0" backgroundColor="#ffffff" orientation="0" html5_fbload="100">
+ <properties iosDevice="0" tv_icon="" logicalWidth="320" version_code="1" windowHeight="0" disableSplash="0" osx_signingId="" splashScaleMode="0" atv_bundle="com.yourdomain.yourapp-atv" splash_v_image="" html5_host="" mouseToTouch="1" retinaDisplay="0" osx_org="GiderosMobile" win_domain="giderosmobile.com" osx_domain="giderosmobile.com" scaleMode="0" osx_bundle="com.yourdomain." backgroundColor="#ffffff" osx_category="5" html5_fbinstant="0" fps="60" mainluaOnly="0" ios_bundle="com.yourdomain.yourapp-ios" osx_installerId="" exportMode="0" orientation="0" encryptAssets="0" html5_fbload="100" html5_pack="0" vsync="0" macos_category="5" html5_mem="256" winrt_package="com.yourdomain.yourapp" encryptCode="0" version="1.0" macos_bundle="com.yourdomain.yourapp-macos" win_org="GiderosMobile" autorotation="0" winrt_org="GiderosMobile" architecture="0" logicalHeight="480" mouseTouchOrder="0" app_name="" html5_wasm="0" build_number="1" html5_crash="" html5_symbols="0" windowWidth="0" splash_h_image="" touchToMouse="1" app_icon="">
   <imageScales/>
   <plugins>
-   <plugin enabled="1" name="LuaFileSystem"/>
+   <plugin name="LuaFileSystem" enabled="1"/>
   </plugins>
   <exports/>
  </properties>
@@ -115,4 +115,5 @@
  </folder>
  <file name="assets/init.lua"/>
  <file name="assets/main.lua"/>
+ <file name="assets/tablesDemo.lua"/>
 </project>

@@ -150,3 +150,34 @@ function ImGui:spread(label, value, size, fac, max_v, adjust, offset)
 	self:popItemWidth()
 	return value, touched
 end
+--
+-- draws separator like that:  ---- label -----------------------
+function ImGui:separatorText(label, offset)
+	offset = offset or 5
+	
+	local x, y = self:getWindowPos()
+	local w, h = self:getWindowSize()
+	local cx, cy = self:getCursorPos()
+	
+	local style = self:getStyle()
+	local indent = style:getIndentSpacing()
+	local color, alpha = style:getColor(ImGui.Col_Separator)
+	local px, py = style:getWindowPadding()
+	local fx, fy = style:getItemSpacing()
+	local hfy = fy // 2
+	
+	self:setCursorPos(px + indent, cy + hfy)
+	self:text(label)
+	
+	local tw, th = self:calcTextSize(label)
+	local thh = th // 2 + hfy
+	local list = self:getWindowDrawList()
+	local ly = y + cy + thh
+	local x1 = px + x
+	local x2 = x1 + indent - offset
+	
+	list:addLine(x1, ly, x2, ly, color, alpha)
+	list:addLine(x1 + indent + tw + offset, ly, x1 + w, ly, color, alpha)
+	
+	self:setCursorPos(cx, cy + fy + th)
+end
