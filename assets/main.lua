@@ -2,35 +2,46 @@ application:setBackgroundColor(0x323232)
 require "ImGui_beta"
 require "ParticlesEditor"
 
+Window = {}
+
 local ui = ImGui.new() 
 ui:setAutoUpdateCursor(true)
 
 local IO = ui:getIO()
---
+local showEditor = true
+
 function onWindowResize()
 	local minX, minY, maxX, maxY = application:getLogicalBounds()
 	local W, H = maxX - minX, maxY - minY
 	
 	ui:setPosition(minX, minY)
 	IO:setDisplaySize(W, H)
+	
+	Window.X = minX
+	Window.Y = minY
+	Window.Right = maxX
+	Window.Bottom = maxY
+	Window.W = W
+	Window.H = H
+	Window.CX = minX + W / 2
+	Window.CY = minY + H / 2
 end
 
 loadStyles(ui)
 onWindowResize()
-stage:addEventListener("applicationResize", onWindowResize)
-stage:addChild(ui)
 
 local editor = ParticlesEditor.new(ui, false)
 
-local showEditor = true
 local function onDrawGui(e)
 	ui:newFrame(e)
 
 	if (showEditor) then 
 		local drawEditor = false
-		showEditor, drawEditor = ui:beginWindow("Particles editor v1.0", showEditor)
+		ui:setNextWindowPos(Window.Right - 400, Window.Y, ImGui.Always)
+		ui:setNextWindowSize(400, Window.H, ImGui.Always)
+		showEditor, drawEditor = ui:beginWindow("Particles editor v1.0", showEditor, ImGui.WindowFlags_NoResize)
 		if (drawEditor) then 
-			editor:draw()
+			editor:draw()			
 		end
 		ui:endWindow()
 	end
@@ -39,4 +50,8 @@ local function onDrawGui(e)
 	ui:endFrame()
 end
 
+stage:addChild(editor)
+stage:addChild(ui)
+
+stage:addEventListener("applicationResize", onWindowResize)
 stage:addEventListener("enterFrame", onDrawGui)

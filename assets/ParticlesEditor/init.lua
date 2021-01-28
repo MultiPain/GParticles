@@ -4,40 +4,17 @@ local PATH = (...):gsub('%.[^%.]+$', '')
 if (not ImGui) then require "ImGui_beta" end
 if (not lfs) then require "lfs" end
 
-require(PATH.."/Emitter")
-require(PATH.."/ImGuiExt")
-
 local SAVE_FILE_NAME = "ParticlesEditor.json"
 
 local ICO_PARTICLES = utf8.char(0xE3A5)
 local ICO_TRASH = utf8.char(0xE872)
-local ICO_ON = utf8.char(0xE8F4)
-local ICO_OFF = utf8.char(0xE8F5)
 local ICO_PEN = utf8.char(0xE3C9)
 local ICO_SAVE = utf8.char(0xE161)
 local ICO_NEW = utf8.char(0xE05E)
 local ICO_X = utf8.char(0xE14C)
 
-local defaultOptions = {
-	previewSize = 64,
-	overrideBgColor = false,
-	bgColor = 0,
-	bgAlpha = 0,
-}
-
-ParticlesEditor = Core.class(Sprite)
-ParticlesEditor.GLOBAL_ID = 1
---
-local function clamp(v, min, max)
+function math.clamp(v, min, max)
 	return (v<>min)><max
-end
---
-local function frandom(min, max)
-	if (not max) then 
-		max = min
-		min = 0
-	end
-	return min + random() * (max - min)
 end
 --
 local function split(inputstr, sep)
@@ -49,7 +26,20 @@ local function split(inputstr, sep)
 	end
 	return t
 end
---
+
+local defaultOptions = {
+	previewSize = 64,
+	overrideBgColor = false,
+	bgColor = 0,
+	bgAlpha = 0,
+}
+
+ParticlesEditor = Core.class(Sprite)
+ParticlesEditor.GLOBAL_ID = 1
+
+require(PATH.."/Emitter")
+require(PATH.."/ImGuiExt")
+
 function ParticlesEditor:init(imgui, enableSaveSettings)
 	self.ui = imgui
 	self.io = self.ui:getIO()
@@ -74,6 +64,8 @@ function ParticlesEditor:init(imgui, enableSaveSettings)
 	})
 	fonts:build()
 	
+	self.dragEmitter = false
+	self.dragType = "global" -- "local"
 	self.showDemoWindow = false
 	self.enableSaveSettings = enableSaveSettings
 	
@@ -151,6 +143,7 @@ end
 function ParticlesEditor:addEmitter()
 	local name = "Emitter" .. ParticlesEditor.GLOBAL_ID
     local emitter = Emitter.new(self, name)
+	emitter:setPosition(Window.CX - 200, Window.CY)
 	self:addChild(emitter)
 	self.emitters[#self.emitters + 1] = emitter
 	ParticlesEditor.GLOBAL_ID += 1
@@ -168,7 +161,6 @@ function ParticlesEditor:draw()
 	
 	if (ui:beginTabBar("TabBar")) then 
 		if (ui:beginTabItem("Emitters")) then 
-		
 			local w, h = ImGui:getContentRegionAvail()
 			
 			ui:beginChild(1, w, h - 50)
@@ -180,21 +172,64 @@ function ParticlesEditor:draw()
 			
 			local i = 1
 			local len = #self.emitters
-			
-			while (i <= len) do 
-				local ps = self.emitters[i]
+			if (len > 0) then
+				local list = ui:getBackgroundDrawList()				
+				local mx, my = ui:getMousePos()
 				
-				local mode, id0, id1 = ps:draw(i)
-				if (ps.delete) then 
-					table.remove(self.subParticles, i)
-					len -= 1
-				else
-					if (mode == "copy") then 
-						--self.emitters[id1]:copyFrom(self.subParticles[id0])
-					elseif (mode == "swap") then 
-						self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
+				while (i <= len) do 
+					local ps = self.emitters[i]
+					
+					local mode, id0, id1 = ps:draw(i)
+					
+					if (ps.delete) then 
+						table.remove(self.subParticles, i)
+						len -= 1
+					else
+						if (ps.visibleMarkers) then
+							local x, y = ps:getPosition()
+							list:addCircle(x, y, 32, 0, 1, nil, 2)
+							list:addCircle(x + ps.posX, y + ps.posY, 20, 0x00ff00, 1, nil, 2)
+							
+							if (not self.dragEmitter) then 
+								local dist1 = math.distance(mx, my, x, y)
+								local dist2 = math.distance(mx, my, x + ps.posX, y + ps.posY)
+								if (ps.drag or (ui:isMouseDown(KeyCode.MOUSE_LEFT) and dist1 < 32)) then 
+									self.dragEmitter = ps
+									self.dragType = "global"
+								elseif (ps.drag or (ui:isMouseDown(KeyCode.MOUSE_RIGHT) and dist2 < 20)) then 
+									self.dragEmitter = ps
+									self.dragType = "local"
+								end
+							end
+						end
+						
+						
+						if (mode == "copy") then 
+							--self.emitters[id1]:copyFrom(self.subParticles[id0])
+						elseif (mode == "swap") then 
+							self:swapChildren(self.emitters[id0], self.emitters[id1])
+							self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
+						end
+						i += 1
 					end
-					i += 1
+				end	
+				
+				if (self.dragEmitter) then 
+					local dx, dy = self.io:getMouseDelta()
+					local x, y = self.dragEmitter:getPosition()
+					x += dx
+					y += dy
+					
+					if (self.dragType == "global") then 
+						self.dragEmitter:setPosition(x, y)
+					else
+						self.dragEmitter.posX += dx
+						self.dragEmitter.posY += dy
+					end
+					
+					if (ui:isMouseReleased(KeyCode.MOUSE_LEFT) or ui:isMouseReleased(KeyCode.MOUSE_RIGHT)) then 
+						self.dragEmitter = false
+					end
 				end
 			end	
 			
@@ -210,7 +245,8 @@ function ParticlesEditor:draw()
 				local payload = ui:acceptDragDropPayload("EMITTER")
 				if (payload) then
 					local id = payload:getNumData()
-					table.remove(self.emitters, id)
+					local child = table.remove(self.emitters, id)
+					self:removeChild(child)
 				else
 					payload = ui:acceptDragDropPayload("SUB_EMITTER")
 					

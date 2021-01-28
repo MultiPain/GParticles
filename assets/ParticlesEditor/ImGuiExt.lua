@@ -162,7 +162,7 @@ function ImGui:separatorText(label, offset)
 	local sy = self:getScrollY()
 	
 	local style = self:getStyle()
-	local indent = style:getIndentSpacing()
+	local indent = 0 --RRstyle:getIndentSpacing()
 	local color, alpha = style:getColor(ImGui.Col_Separator)
 	local px, py = style:getWindowPadding()
 	local fx, fy = style:getItemSpacing()
