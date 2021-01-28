@@ -153,11 +153,13 @@ end
 --
 -- draws separator like that:  ---- label -----------------------
 function ImGui:separatorText(label, offset)
-	offset = offset or 5
+	offset = offset or 10
 	
 	local x, y = self:getWindowPos()
 	local w, h = self:getWindowSize()
 	local cx, cy = self:getCursorPos()
+	local sx = self:getScrollX()
+	local sy = self:getScrollY()
 	
 	local style = self:getStyle()
 	local indent = style:getIndentSpacing()
@@ -172,8 +174,8 @@ function ImGui:separatorText(label, offset)
 	local tw, th = self:calcTextSize(label)
 	local thh = th // 2 + hfy
 	local list = self:getWindowDrawList()
-	local ly = y + cy + thh
-	local x1 = px + x
+	local ly = y + cy + thh - sy
+	local x1 = px + x - sx
 	local x2 = x1 + indent - offset
 	
 	list:addLine(x1, ly, x2, ly, color, alpha)

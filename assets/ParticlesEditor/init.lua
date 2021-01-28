@@ -9,9 +9,6 @@ require(PATH.."/ImGuiExt")
 
 local SAVE_FILE_NAME = "ParticlesEditor.json"
 
-local BLEND_MODES = {"None", Sprite.ADD, Sprite.ALPHA, Sprite.MULTIPLY, Sprite.NO_ALPHA, Sprite.SCREEN}
-local COLOR_PICKER_FLAGS = ImGui.ColorEditFlags_AlphaPreviewHalf | ImGui.ColorEditFlags_AlphaPreview
-
 local ICO_PARTICLES = utf8.char(0xE3A5)
 local ICO_TRASH = utf8.char(0xE872)
 local ICO_ON = utf8.char(0xE8F4)
@@ -29,15 +26,33 @@ local defaultOptions = {
 }
 
 ParticlesEditor = Core.class(Sprite)
+ParticlesEditor.GLOBAL_ID = 1
 --
 local function clamp(v, min, max)
 	return (v<>min)><max
 end
 --
+local function frandom(min, max)
+	if (not max) then 
+		max = min
+		min = 0
+	end
+	return min + random() * (max - min)
+end
+--
+local function split(inputstr, sep)
+	local t = {}
+	local pattern = "([^"..sep.."]+)"
+	
+	for str in inputstr:gmatch(pattern) do
+		table.insert(t, str)
+	end
+	return t
+end
+--
 function ParticlesEditor:init(imgui, enableSaveSettings)
 	self.ui = imgui
 	self.io = self.ui:getIO()
-	
 	
 	if (ImGui.ConfigFlags_DockingEnable) then 
 		self.dockingEnabled = true
@@ -62,19 +77,8 @@ function ParticlesEditor:init(imgui, enableSaveSettings)
 	self.showDemoWindow = false
 	self.enableSaveSettings = enableSaveSettings
 	
-	self.particles = Particles.new()
-	self:addChild(self.particles)
-	
 	self.emitters = {}
 	self.images = {}
-	
-	self.image = nil
-	self.imageName = ""
-	self.blendMode = 0
-	self.colorTransform = 0xffffff
-	self.colorTransformAlpha = 1
-	self.spawnRate = 1
-	self.isPaused = false
 	
 	self:loadImages("|R|"..PATH.."/images")
 	
@@ -86,6 +90,8 @@ function ParticlesEditor:init(imgui, enableSaveSettings)
 			self.settings[key] = value
 		end
 	end
+	
+	self:addEmitter()
 end
 --
 function ParticlesEditor:loadSave()
@@ -143,99 +149,89 @@ function ParticlesEditor:loadImages(dir)
 end
 --
 function ParticlesEditor:addEmitter()
-	self.emitters[#self.emitters + 1] = Emitter.new()
+	local name = "Emitter" .. ParticlesEditor.GLOBAL_ID
+    local emitter = Emitter.new(self, name)
+	self:addChild(emitter)
+	self.emitters[#self.emitters + 1] = emitter
+	ParticlesEditor.GLOBAL_ID += 1
 end
 --
-function ParticlesEditor:updateTexture(texture, name)
-	self.image = texture
-	self.imageName = name
-	if (texture) then 
-		self.particles:setTexture(texture)
-		for i,ps in ipairs(self.particles) do 
-			ps.particles:setTexture(texture)
-		end
-	else
-		self.particles:clearTexture()
-		for i,ps in ipairs(self.particles) do 
-			ps.particles:clearTexture()
-		end
-	end
-end
---
-function ParticlesEditor:updateBlendMode()
-	if (self.blendMode == 0) then 
-		self.particles:clearBlendMode()
-		for i,ps in ipairs(self.particles) do 
-			ps.particles:clearBlendMode()
-		end
-	else
-		self.particles:setBlendMode(BLEND_MODES[self.blendMode + 1])
-		for i,ps in ipairs(self.particles) do 
-			ps.particles:setBlendMode(BLEND_MODES[self.blendMode + 1])
-		end
-	end
-end
---
-function ParticlesEditor:updateColorTransform()
-	local r, g, b = self.ui:colorConvertHEXtoRGB(self.colorTransform)
-	self.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
-	for i,ps in ipairs(self.particles) do 
-		ps.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
-	end
-end
---
-function ParticlesEditor:drawEmitters()
+function ParticlesEditor:draw()
 	local ui = self.ui
-	ui:separatorText("Texture")
+	local io = self.io
 	
-	ui:pushItemWidth(-1)
-	if (ui:beginCombo("##MAIN_IMAGE", self.imageName, ImGui.ComboFlags_NoArrowButton)) then 
-		for i,v in ipairs(self.images) do 
-			if (ui:scaledImageButtonWithText(v.texture, v.name .. "##MAIN_IMAGE", 20, 20, 4)) then 
-				self:updateTexture(v.texture, v.name)
+	self.showDemoWindow = ui:checkbox("Show demo", self.showDemoWindow)
+	
+	if (self.showDemoWindow) then 
+		self.showDemoWindow = ui:showDemoWindow(self.showDemoWindow)
+	end
+	
+	if (ui:beginTabBar("TabBar")) then 
+		if (ui:beginTabItem("Emitters")) then 
+		
+			local w, h = ImGui:getContentRegionAvail()
+			
+			ui:beginChild(1, w, h - 50)
+			
+			if (ui:button("+ emitter", -1)) then 
+				self:addEmitter()
 			end
-			if (ui:isItemHovered()) then
+			ui:separator()
+			
+			local i = 1
+			local len = #self.emitters
+			
+			while (i <= len) do 
+				local ps = self.emitters[i]
+				
+				local mode, id0, id1 = ps:draw(i)
+				if (ps.delete) then 
+					table.remove(self.subParticles, i)
+					len -= 1
+				else
+					if (mode == "copy") then 
+						--self.emitters[id1]:copyFrom(self.subParticles[id0])
+					elseif (mode == "swap") then 
+						self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
+					end
+					i += 1
+				end
+			end	
+			
+			ui:endChild()
+			
+			ui:button(ICO_TRASH, -1, -1)
+			if (ui:isItemHovered()) then 
 				ui:beginTooltip()
-				ui:scaledImage(v.texture, self.settings.previewSize, self.settings.previewSize)
+				ui:text("Drag & drop emitter here")
 				ui:endTooltip()
 			end
+			if (ui:beginDragDropTarget()) then
+				local payload = ui:acceptDragDropPayload("EMITTER")
+				if (payload) then
+					local id = payload:getNumData()
+					table.remove(self.emitters, id)
+				else
+					payload = ui:acceptDragDropPayload("SUB_EMITTER")
+					
+					if (payload) then
+						local str = payload:getStrData()
+						local t = split(str, ";")
+						table.remove(self.emitters[t[1]].subEmitters, t[2])
+					end
+				end
+			end
+			
+			ui:endTabItem()
 		end
-		ui:endCombo()
-	end
-	if (self.image) then 
-		ui:sameLine()
-		if (ui:button("X##MAIN_DELETE_IMAGE")) then 
-			self:updateTexture(nil, "")
+		if (ui:beginTabItem("Settings")) then 
+			
+			self:drawSettings()
+			
+			ui:endTabItem()
 		end
-		ui:text("Preview:")
-		local w = ui:getContentRegionAvail()
-		ui:scaledImage(self.image, w, self.settings.previewSize)
-	else
-		ui:text("Preview:")
-		local w = ui:getContentRegionAvail()
-		ui:dummy(w, self.settings.previewSize)
 	end
-	
-	ui:separatorText("Blend mode")
-	local blendModeChanged = false
-	self.blendMode, blendModeChanged = ui:combo("##MAIN_BLEND_MODE", self.blendMode, BLEND_MODES)
-	
-	if (blendModeChanged) then 
-		self:updateBlendMode()
-	end	
-	
-	ui:separatorText("Spawn rate")
-	self.spawnRate = ui:sliderInt("##MAIN_SPAWN_RATE", self.spawnRate, 1, 1000)	
-	
-	ui:separatorText("Color transform")	
-	local colorChanged = false
-	self.colorTransform, self.colorTransformAlpha, colorChanged = ui:colorEdit4("##MAIN_COLOR_TRANSFORM", self.colorTransform, self.colorTransformAlpha)
-	if (colorChanged) then 
-		self:updateColorTransform()
-	end
-	ui:separatorText("IDK")	
-	
-	ui:popItemWidth(w)
+	ui:endTabBar()
 end
 --
 function ParticlesEditor:drawSettings()
@@ -264,68 +260,5 @@ function ParticlesEditor:drawSettings()
 		self:saveSettings()
 	end
 end
---
-local flags = ImGui.TableFlags_Borders | ImGui.TableFlags_RowBg
-function ParticlesEditor:PushStyleCompact()
-    local style = self.ui:getStyle()
-	local fx, fy = style:getFramePadding()
-	local ix, iy = style:getItemSpacing()
-    self.ui:pushStyleVar(ImGui.StyleVar_FramePadding, fx, fy * 0.6)
-    self.ui:pushStyleVar(ImGui.StyleVar_ItemSpacing, ix, iy * 0.6)
-end
---
-function ParticlesEditor:draw()
-	local ui = self.ui
-	local io = self.io
-	
-	self.showDemoWindow = ui:checkbox("Show demo", self.showDemoWindow)
-	
-	if (self.showDemoWindow) then 
-		self.showDemoWindow = ui:showDemoWindow(self.showDemoWindow)
-	end
-	
-	if (ui:treeNode("Borders, background")) then
-	
-	self:PushStyleCompact()
-    flags = ui:checkboxFlags("ImGuiTableFlags_RowBg", flags, ImGui.TableFlags_RowBg)
-    flags = ui:checkboxFlags("ImGuiTableFlags_Borders", flags, ImGui.TableFlags_Borders)
-    ui:indent()
-	
-	flags = ui:checkboxFlags("ImGuiTableFlags_BordersH", flags, ImGui.TableFlags_BordersH)
-    ui:indent()
-    
-	flags = ui:checkboxFlags("ImGuiTableFlags_BordersOuterH", flags, ImGui.TableFlags_BordersOuterH)
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersInnerH", flags, ImGui.TableFlags_BordersInnerH)
-	ui:unindent()
-	
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersV", flags, ImGui.TableFlags_BordersV)
-    ui:indent()
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersOuterV", flags, ImGui.TableFlags_BordersOuterV)
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersInnerV", flags, ImGui.TableFlags_BordersInnerV)
-    ui:unindent()
 
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersOuter", flags, ImGui.TableFlags_BordersOuter)
-    flags = ui:checkboxFlags("ImGuiTableFlags_BordersInner", flags, ImGui.TableFlags_BordersInner)
-    ui:unindent()
-	ui:popStyleVar(2)
-	
-	ui:treePop()
-	end
-	
-	if (ui:beginTabBar("TabBar")) then 
-		if (ui:beginTabItem("Emitters")) then 
-			
-			self:drawEmitters()
-			
-			ui:endTabItem()
-		end
-		if (ui:beginTabItem("Settings")) then 
-			
-			self:drawSettings()
-			
-			ui:endTabItem()
-		end
-	end
-	ui:endTabBar()
-end
 
