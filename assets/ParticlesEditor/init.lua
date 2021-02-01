@@ -4,28 +4,11 @@ local PATH = (...):gsub('%.[^%.]+$', '')
 if (not ImGui) then require "ImGui_beta" end
 if (not lfs) then require "lfs" end
 
+local TABLE_FLAGS = ImGui.TableFlags_RowBg | ImGui.TableFlags_PadOuterX
+
 local SAVE_FILE_NAME = "ParticlesEditor.json"
 
-local ICO_PARTICLES = utf8.char(0xE3A5)
-local ICO_TRASH = utf8.char(0xE872)
-local ICO_PEN = utf8.char(0xE3C9)
-local ICO_SAVE = utf8.char(0xE161)
-local ICO_NEW = utf8.char(0xE05E)
-local ICO_X = utf8.char(0xE14C)
-
-function math.clamp(v, min, max)
-	return (v<>min)><max
-end
---
-local function split(inputstr, sep)
-	local t = {}
-	local pattern = "([^"..sep.."]+)"
-	
-	for str in inputstr:gmatch(pattern) do
-		table.insert(t, str)
-	end
-	return t
-end
+local random = math.random
 
 local defaultOptions = {
 	previewSize = 64,
@@ -34,8 +17,44 @@ local defaultOptions = {
 	bgAlpha = 0,
 }
 
+local ICONS = {
+	PARTICLES = utf8.char(0xE3A5),
+	TRASH = utf8.char(0xE872),
+	PEN = utf8.char(0xE3C9),
+	SAVE = utf8.char(0xE161),
+	NEW = utf8.char(0xE05E),
+	X = utf8.char(0xE14C),
+	OFF = utf8.char(0xE8F5),
+	ON = utf8.char(0xE8F4),
+}
+
+local function split(inputstr, sep)
+	local t = {}
+	local pattern = "([^"..sep.."]+)"
+	
+	for str in inputstr:gmatch(pattern) do
+		table.insert(t, str)
+	end
+	return t
+end 
+
 ParticlesEditor = Core.class(Sprite)
 ParticlesEditor.GLOBAL_ID = 1
+ParticlesEditor.frandom = function(min, max)
+	if (not max) then 
+		max = min
+		min = 0
+	end
+	return min + random() * (max - min)
+end
+
+ParticlesEditor.clamp = function(v, min, max)
+	return (v<>min)><max
+end
+
+ParticlesEditor.split = split
+ParticlesEditor.ICONS = ICONS
+ParticlesEditor.helpMarker = helpMarker
 
 require(PATH.."/Emitter")
 require(PATH.."/ImGuiExt")
@@ -43,11 +62,6 @@ require(PATH.."/ImGuiExt")
 function ParticlesEditor:init(imgui, enableSaveSettings)
 	self.ui = imgui
 	self.io = self.ui:getIO()
-	
-	if (ImGui.ConfigFlags_DockingEnable) then 
-		self.dockingEnabled = true
-		self.io:addConfigFlags(ImGui.ConfigFlags_DockingEnable)
-	end
 	
 	local fonts = self.io:getFonts()
 	fonts:addFont(PATH.."/MaterialIcons-Regular.ttf", 16, {
@@ -147,28 +161,72 @@ function ParticlesEditor:addEmitter()
 	self:addChild(emitter)
 	self.emitters[#self.emitters + 1] = emitter
 	ParticlesEditor.GLOBAL_ID += 1
+	return emitter
+end
+--
+function ParticlesEditor:save()
+	local data = {}
+	for i,emitter in ipairs(self.emitters) do 
+		local t = emitter:save()
+		data[i] = t
+	end
+	local str = json.encode(data)
+	local file = io.open("|D|test.json", "w")
+	if (file) then 
+		file:write(str)
+		file:close()
+	end
+end
+--
+function ParticlesEditor:load()
+	local file = io.open("|D|test.json", "r")
+	if (file) then 
+		local str = file:read("*a")
+		file:close()
+		
+		local data = json.decode(str)
+		for i = #self.emitters, 1, -1 do
+			self:removeChild(self.emitters[i])
+			self.emitters[i] = nil
+		end
+		for i,t in ipairs(data) do 
+			local emitter = self:addEmitter()
+			emitter:load(t)
+		end
+	end
 end
 --
 function ParticlesEditor:draw()
 	local ui = self.ui
 	local io = self.io
 	
+	--[[
 	self.showDemoWindow = ui:checkbox("Show demo", self.showDemoWindow)
 	
 	if (self.showDemoWindow) then 
 		self.showDemoWindow = ui:showDemoWindow(self.showDemoWindow)
 	end
+	]]
+	if (ui:button("Save")) then 
+		self:save()
+	end
+	ui:sameLine()
+	if (ui:button("Load")) then 
+		self:load()
+	end
+	ui:sameLine()
+	ui:textDisabled("<-- WIP")
 	
 	if (ui:beginTabBar("TabBar")) then 
 		if (ui:beginTabItem("Emitters")) then 
 			local w, h = ImGui:getContentRegionAvail()
 			
-			ui:beginChild(1, w, h - 50)
-			
 			if (ui:button("+ emitter", -1)) then 
 				self:addEmitter()
 			end
 			ui:separator()
+			
+			--ui:beginChild(1, w, h - 75)
 			
 			local i = 1
 			local len = #self.emitters
@@ -176,43 +234,49 @@ function ParticlesEditor:draw()
 				local list = ui:getBackgroundDrawList()				
 				local mx, my = ui:getMousePos()
 				
-				while (i <= len) do 
-					local ps = self.emitters[i]
-					
-					local mode, id0, id1 = ps:draw(i)
-					
-					if (ps.delete) then 
-						table.remove(self.subParticles, i)
-						len -= 1
-					else
-						if (ps.visibleMarkers) then
+				
+					while (i <= len) do 
+						local ps = self.emitters[i]
+						
+						local mode, id0, id1 = ps:draw(i)
+						
+						if (ps.delete) then 
+							local child = table.remove(self.emitters, i)
+							self:removeChild(child)
+							len -= 1
+						else
 							local x, y = ps:getPosition()
-							list:addCircle(x, y, 32, 0, 1, nil, 2)
-							list:addCircle(x + ps.posX, y + ps.posY, 20, 0x00ff00, 1, nil, 2)
+							
+							if (ps.visibleMarkers) then
+								list:addCircle(x, y, 32, 0, 1, nil, 2)
+								list:addCircle(x + ps.posX, y + ps.posY, 20, 0x00ff00, 1, nil, 2)
+							end
 							
 							if (not self.dragEmitter) then 
 								local dist1 = math.distance(mx, my, x, y)
 								local dist2 = math.distance(mx, my, x + ps.posX, y + ps.posY)
-								if (ps.drag or (ui:isMouseDown(KeyCode.MOUSE_LEFT) and dist1 < 32)) then 
+								if (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_LEFT) and dist1 < 32)) then 
 									self.dragEmitter = ps
 									self.dragType = "global"
-								elseif (ps.drag or (ui:isMouseDown(KeyCode.MOUSE_RIGHT) and dist2 < 20)) then 
+								elseif (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_RIGHT) and dist2 < 20)) then 
 									self.dragEmitter = ps
 									self.dragType = "local"
 								end
 							end
+							
+							
+							if (mode == "copy") then 
+								--self.emitters[id1]:copyFrom(self.subParticles[id0])
+							elseif (mode == "swap") then 
+								self:swapChildren(self.emitters[id0], self.emitters[id1])
+								self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
+							end
+							i += 1
 						end
-						
-						
-						if (mode == "copy") then 
-							--self.emitters[id1]:copyFrom(self.subParticles[id0])
-						elseif (mode == "swap") then 
-							self:swapChildren(self.emitters[id0], self.emitters[id1])
-							self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
-						end
-						i += 1
-					end
-				end	
+					end	
+				--end	
+				--
+				--ui:endTable()
 				
 				if (self.dragEmitter) then 
 					local dx, dy = self.io:getMouseDelta()
@@ -233,9 +297,10 @@ function ParticlesEditor:draw()
 				end
 			end	
 			
-			ui:endChild()
+			--ui:endChild()
 			
-			ui:button(ICO_TRASH, -1, -1)
+			--[[
+			ui:button(ICONS.TRASH, -1, -1)
 			if (ui:isItemHovered()) then 
 				ui:beginTooltip()
 				ui:text("Drag & drop emitter here")
@@ -253,10 +318,11 @@ function ParticlesEditor:draw()
 					if (payload) then
 						local str = payload:getStrData()
 						local t = split(str, ";")
-						table.remove(self.emitters[t[1]].subEmitters, t[2])
+						table.remove(self.emitters[ t[1] ].subEmitters, t[2])
 					end
 				end
 			end
+			]]
 			
 			ui:endTabItem()
 		end

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
- <properties encryptCode="0" ios_bundle="com.yourdomain.yourapp-ios" exportMode="0" fps="60" html5_pack="0" html5_fbinstant="0" encryptAssets="0" logicalHeight="480" build_number="1" atv_bundle="com.yourdomain.yourapp-atv" win_domain="giderosmobile.com" autorotation="0" osx_signingId="" version_code="1" windowHeight="0" osx_installerId="" app_icon="" disableSplash="0" macos_bundle="com.yourdomain.yourapp-macos" splash_h_image="" iosDevice="0" win_org="GiderosMobile" html5_fbload="100" windowWidth="0" touchToMouse="1" mainluaOnly="0" macos_category="5" splash_v_image="" html5_mem="256" scaleMode="0" html5_symbols="0" winrt_org="GiderosMobile" splashScaleMode="0" osx_org="GiderosMobile" osx_bundle="com.yourdomain." winrt_package="com.yourdomain.yourapp" app_name="" mouseTouchOrder="0" vsync="0" orientation="0" version="1.0" html5_crash="" architecture="0" mouseToTouch="1" retinaDisplay="0" html5_host="" logicalWidth="320" tv_icon="" osx_domain="giderosmobile.com" html5_wasm="0" backgroundColor="#ffffff" osx_category="5">
+ <properties osx_bundle="com.yourdomain." iosDevice="0" scaleMode="0" html5_symbols="0" windowWidth="0" html5_wasm="0" winrt_package="com.yourdomain.yourapp" vsync="0" html5_host="" macos_category="5" tv_icon="" orientation="0" disableSplash="0" osx_domain="giderosmobile.com" mainluaOnly="0" splash_h_image="" osx_signingId="" osx_category="5" windowHeight="0" splashScaleMode="0" exportMode="0" macos_bundle="com.yourdomain.yourapp-macos" architecture="0" html5_fbload="100" encryptCode="0" logicalHeight="480" version_code="1" html5_pack="0" html5_mem="256" autorotation="0" app_icon="" osx_installerId="" version="1.0" atv_bundle="com.yourdomain.yourapp-atv" html5_crash="" mouseTouchOrder="0" splash_v_image="" app_name="" retinaDisplay="0" touchToMouse="1" osx_org="GiderosMobile" win_domain="giderosmobile.com" ios_bundle="com.yourdomain.yourapp-ios" win_org="GiderosMobile" encryptAssets="0" build_number="1" winrt_org="GiderosMobile" html5_fbinstant="0" backgroundColor="#ffffff" fps="60" logicalWidth="320" mouseToTouch="1">
   <imageScales/>
   <plugins>
    <plugin name="LuaFileSystem" enabled="1"/>
@@ -114,6 +114,5 @@
   <file name="assets/ParticlesEditor/SubEmitter.lua"/>
   <file name="assets/ParticlesEditor/init.lua"/>
  </folder>
- <file name="assets/init.lua"/>
  <file name="assets/main.lua"/>
 </project>

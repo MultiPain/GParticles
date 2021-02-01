@@ -8,17 +8,17 @@ local pi = math.pi
 local acos = math.acos
 local sqrt = math.sqrt
 local length = math.length
-local clamp = math.clamp
+local clamp = ParticlesEditor.clamp
 --
-function ImGui:anhorPoint(id, w, h, minX, maxX, minY, maxY)
-	minX = minX or 0
-	maxX = maxX or 1
-	minY = minY or 0
-	maxY = maxY or 1
-	
-	self:pushID(id)
-	
-	self:popID()
+function ImGui:helpMarker(desc)
+	self:textDisabled("(?)")
+	if (self:isItemHovered()) then
+		self:beginTooltip()
+		self:pushTextWrapPos(self:getFontSize() * 35)
+		self:text(desc)
+		self:popTextWrapPos()
+		self:endTooltip()
+	end
 end
 --
 function ImGui:dial(label, value, size, fac, max_v, offset)
