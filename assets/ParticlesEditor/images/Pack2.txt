@@ -1,0 +1,17 @@
+flame_05_rotated.png, 1, 1, 325, 309, 75, 0, 112, 203
+flame_06_rotated.png, 328, 1, 363, 324, 75, 0, 74, 188
+muzzle_01_rotated.png, 693, 1, 512, 475, 0, 14, 0, 23
+muzzle_02_rotated.png, 1, 327, 512, 408, 0, 0, 0, 104
+muzzle_03_rotated.png, 1207, 1, 512, 298, 0, 89, 0, 125
+muzzle_04_rotated.png, 1207, 301, 512, 399, 0, 0, 0, 113
+muzzle_05_rotated.png, 515, 478, 512, 305, 0, 109, 0, 98
+spark_05_rotated.png, 1, 737, 512, 403, 0, 0, 0, 109
+spark_06_rotated.png, 1029, 702, 512, 334, 0, 0, 0, 178
+trace_01_rotated.png, 1543, 702, 504, 198, 6, 157, 2, 157
+trace_02_rotated.png, 515, 785, 508, 201, 4, 155, 0, 156
+trace_03_rotated.png, 515, 988, 512, 210, 0, 150, 0, 152
+trace_04_rotated.png, 1, 1142, 512, 202, 0, 154, 0, 156
+trace_05_rotated.png, 1, 1346, 512, 214, 0, 150, 0, 148
+trace_06_rotated.png, 1543, 902, 462, 357, 25, 0, 25, 155
+trace_07_rotated.png, 1029, 1038, 512, 326, 0, 0, 0, 186
+window_04.png, 1543, 1261, 502, 510, 5, 0, 5, 2

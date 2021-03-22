@@ -11,6 +11,88 @@ local sin = math.sin
 local PI2 = math.pi * 2
 local toDeg = 180 / math.pi
 
+local default = {
+	name = "",
+	tmpName = "",
+	
+	image = nil,
+	imageName = "",
+	
+	blendMode = 0,
+	
+	colorTransform = 0xffffff,
+	colorTransformAlpha = 1,
+	colors = {},
+	
+	spawnRate = 1,
+	spawnFreq = 0, -- 0: every frame
+	spawnTimer = 0,
+	
+	emmsionShape = 0,
+	emmsionShapeType = 0,
+	
+	isPaused = false,
+	visibleMarkers = true ,
+	visible = true,
+	delete = false,
+	lockToDirection = true,
+	faceToDirection = false,
+	
+	direction = 90,
+	spread = 45,
+	color = 0xffffff,
+	alpha = 1,
+	
+	posX = 0,
+	posY = 0,
+	
+	emissionRadius = 0,
+	emissionW = 0,
+	emissionH = 0,
+	emmsionAX = 0.5,
+	emmsionAY = 0.5,
+	
+	speed = 2.5,
+	speed_min = 0,
+	speed_max = 0,
+	
+	ttl = 40,
+	ttl_min = 0,
+	ttl_max = 0,
+	
+	size = 10,
+	size_min = 0,
+	size_max = 0,
+	
+	angle = 0,
+	angle_min = 0,
+	angle_max = 0,
+	
+	speedAngular = 0,
+	speedAngular_min = 0,
+	speedAngular_max = 0,
+	
+	speedGrowth = 0,
+	speedGrowth_min = 0,
+	speedGrowth_max = 0,
+	
+	decay = 1,
+	decay_min = 0,
+	decay_max = 0,
+
+	decayAngular = 1,
+	decayAngular_min = 0,
+	decayAngular_max = 0,
+
+	decayGrowth = 1,
+	decayGrowth_min = 0,
+	decayGrowth_max = 0,
+
+	decayAlpha = 1,
+	decayAlpha_min = 0,
+	decayAlpha_max = 0,
+}
+
 Emitter = Core.class(Sprite)
 
 function Emitter:init(scene, name)
@@ -22,58 +104,33 @@ function Emitter:init(scene, name)
 	self.particles = Particles.new()
 	self:addChild(self.particles)
 	
-	self.name = name
-	self.tmpName = name
-	
 	self.subEmitters = {} -- TODO
 	
-	self.image = nil
-	self.imageName = ""
-	self.blendMode = 0
-	self.colorTransform = 0xffffff
-	self.colorTransformAlpha = 1
-	self.spawnRate = 1
-	self.spawnFreq = 0 -- 0: every frame
-	self.spawnTimer = 0
-	self.emmsionShape = 0
-	self.emmsionShapeType = 0
+	self:load(default)
 	
-	self.isPaused = false	
-	self.visibleMarkers = true -- drag&drop circles
-	self.visible = true
-	self.delete = false
-	self.lockToDirection = true
-	self.faceToDirection = false
-	
-	self.direction = 90
-	self.spread = 45
-	
-	self.color = 0xffffff
-	self.alpha = 1
-	
-	self.posX = 0			
-	self.posY = 0			
-	self.emissionRadius = 0	self.emissionW = 0			self.emissionH = 0			self.emmsionAX = 0.5			self.emmsionAY = 0.5
-	self.speed = 2			self.speed_min = 0			self.speed_max = 0
-	self.ttl = 20			self.ttl_min = 0			self.ttl_max = 0
-	self.size = 10			self.size_min = 0			self.size_max = 0
-	self.angle = 0			self.angle_min = 0			self.angle_max = 0
-	
-	self.speedAngular = 0	self.speedAngular_min = 0	self.speedAngular_max = 0
-	self.speedGrowth = 0	self.speedGrowth_min = 0	self.speedGrowth_max = 0
-	self.decay = 1			self.decay_min = 0			self.decay_max = 0
-	self.decayAngular = 1	self.decayAngular_min = 0	self.decayAngular_max = 0
-	self.decayGrowth = 1	self.decayGrowth_min = 0	self.decayGrowth_max = 0
-	self.decayAlpha = 1		self.decayAlpha_min = 0		self.decayAlpha_max = 0
+	self.name = name
+	self.tmpName = name
 	
 	self.resetX, self.resetY = self:getPosition()
 end
 -- 
-function Emitter:load(t)
+function Emitter:load(t, keepName)
+	self:clear()
+	
+	local tmpName = self.name
+	
 	for k,v in pairs(t) do 
 		self[k] = v
 	end
-	if (self.imageName ~= "") then 
+	
+	if (keepName) then 
+		self.name = tmpName
+		self.tmpName = tmpName
+	end
+	
+	if (self.imageName == "") then 
+		self:updateTexture(nil, "")
+	else
 		for i,v in ipairs(self.parent.images) do
 			if (v.name == self.imageName) then 
 				self:updateTexture(v.texture, v.name)
@@ -86,75 +143,23 @@ function Emitter:load(t)
 end
 -- 
 function Emitter:save()
-	local t = {
-		name = self.name,
-		imageName = self.imageName,
-		blendMode = self.blendMode,
-		colorTransform = self.colorTransform,
-		colorTransformAlpha = self.colorTransformAlpha,
-		spawnRate = self.spawnRate,
-		spawnFreq = self.spawnFreq,
-		spawnTimer = self.spawnTimer,
-		emmsionShape = self.emmsionShape,
-		emmsionShapeType = self.emmsionShapeType,
-		
-		isPaused = self.isPaused,
-		visibleMarkers = self.visibleMarkers,
-		visible = self.visible,
-		delete = self.delete,
-		lockToDirection = self.lockToDirection,
-		faceToDirection = self.faceToDirection,
-		
-		direction = self.direction,
-		spread = self.spread,
-		
-		color = self.color,
-		alpha = self.alpha,
-		
-		posX = self.posX,
-		posY = self.posY,
-		
-		emissionRadius = self.emissionRadius,
-		emissionW = self.emissionW,
-		emissionH = self.emissionH,
-		emmsionAX = self.emmsionAX,
-		emmsionAY = self.emmsionAY,
-		speed = self.speed,
-		speed_min = self.speed_min,
-		speed_max = self.speed_max,
-		ttl = self.ttl,
-		ttl_min = self.ttl_min,
-		ttl_max = self.ttl_max,
-		size = self.size,
-		size_min = self.size_min,
-		size_max = self.size_max,
-		angle = self.angle,
-		angle_min = self.angle_min,
-		angle_max = self.angle_max,
-		
-		speedAngular = self.speedAngular,
-		speedAngular_min = self.speedAngular_min,
-		speedAngular_max = self.speedAngular_max,
-		speedGrowth = self.speedGrowth,
-		speedGrowth_min = self.speedGrowth_min,
-		speedGrowth_max = self.speedGrowth_max,
-		decay = self.decay,
-		decay_min = self.decay_min,
-		decay_max = self.decay_max,
-		decayAngular = self.decayAngular,
-		decayAngular_min = self.decayAngular_min,
-		decayAngular_max = self.decayAngular_max,
-		decayGrowth = self.decayGrowth,
-		decayGrowth_min = self.decayGrowth_min,
-		decayGrowth_max = self.decayGrowth_max,
-		decayAlpha = self.decayAlpha,
-		decayAlpha_min = self.decayAlpha_min,
-		decayAlpha_max = self.decayAlpha_max,
-		
-		resetX = self.resetX,
-		resetY = self.resetY,
-	}
+	local t = {}
+	for k,v in pairs(default) do 
+		t[k] = self[k]
+	end
 	return t
+end
+-- 
+function Emitter:clear()
+	self.particles:removeParticles()
+	for i,ps in ipairs(self.subEmitters) do 
+		ps.particles:removeParticles()
+	end
+end
+-- 
+function Emitter:copyFrom(other)
+	local options = other:save()
+	self:load(options, true)
 end
 -- 
 function Emitter:updateTexture(texture, name)
@@ -188,7 +193,7 @@ function Emitter:updateBlendMode()
 end
 --
 function Emitter:updateColorTransform()
-	local r, g, b = self.ui:colorConvertHEXtoRGB(self.colorTransform)
+	local r, g, b = ImGui.colorConvertHEXtoRGB(self.colorTransform)
 	self.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
 	for i,ps in ipairs(self.subEmitters) do 
 		ps.particles:setColorTransform(r, g, b, self.colorTransformAlpha)
@@ -245,6 +250,31 @@ function Emitter:drawBody(id)
 		end
 		
 		self.color, self.alpha = ui:colorEdit4("Color##EMITTER_COLOR_"..id, self.color, self.alpha)
+		
+		if (ui:treeNode("Random colors##EMITTER_RANDOM_COLORS_"..id)) then
+			local ID = "##EMITTER_COLOR_"..id
+			if (ui:button("ADD"..ID, -1)) then 
+				self.colors[#self.colors + 1] = {
+					hex = 0, a = 1
+				}
+			end
+			
+			local len = #self.colors
+			local i = 1
+			while (i <= len) do
+				if (ui:button("-"..ID..i)) then 
+					len -= 1
+					table.remove(self.colors, i)
+					i -= 1
+					if (len == 0) then break end
+				end
+				local color = self.colors[i]
+				ui:sameLine()
+				color.hex, color.a = ui:colorEdit4("#"..i..ID, color.hex, color.a)
+				i += 1
+			end
+			ui:treePop()
+		end
 		ui:treePop()
 	end
 	
@@ -335,8 +365,10 @@ function Emitter:drawBody(id)
 			local x, y = self:getPosition()
 			list:addCircle(x + self.posX, y + self.posY, self.emissionRadius, 0xff0000, 1, nil, 2)
 		elseif (self.emmsionShape == 2) then
+			self.emmsionAX, self.emmsionAY = ui:point("Anchor##EMITTER_ANCHOR"..id, 100, self.emmsionAX, self.emmsionAY, 0, 0, 1, 1)
 			self.emissionW, self.emissionH = ui:dragFloat2("Size##EMITTER_ESIZE_"..id, self.emissionW, self.emissionH, 0.1, 0, 1000000)
-			self.emmsionAX, self.emmsionAY = ui:dragFloat2("Anchor##EMITTER_EANCHOR"..id, self.emmsionAX, self.emmsionAY, 0.01, 0, 1)
+			--self.emmsionAX, self.emmsionAY = ui:dragFloat2("Anchor##EMITTER_EANCHOR"..id, self.emmsionAX, self.emmsionAY, 0.01, 0, 1)
+	
 			
 			local list = ui:getBackgroundDrawList()
 			local x, y = self:getPosition()
@@ -420,10 +452,24 @@ function Emitter:drawBody(id)
 	end
 	
 	if (ui:button("Force clear##EMITTER_CLEAR_"..id, -1)) then 
-		self.particles:removeParticles()
-		for i,ps in ipairs(self.subEmitters) do 
-			ps.particles:removeParticles()
+		self:clear()
+	end
+	
+	if (ui:button("Reset##EMITTER_RESET_"..id, -1)) then 
+		ui:openPopup("Confirm##EMITTER_CRESET_"..id)
+	end
+	
+	if (ui:beginPopupModal("Confirm##EMITTER_CRESET_"..id)) then 
+		ui:text("This will reset all the setting.\nAre you sure you want to reset?")
+		if (ui:button("Yes##EMITTER_CRY_"..id)) then 
+			-- keep name
+			self:load(default, true, id)
+			ui:closeCurrentPopup()
 		end
+		if (ui:button("No##EMITTER_CRY_"..id)) then 
+			ui:closeCurrentPopup()
+		end
+		ui:endPopup()
 	end
 end
 --
@@ -432,9 +478,7 @@ function Emitter:draw(id)
 	local mode, id1, id2
 	local flag = false
 	
-	--ui:pushStyleVar(ImGui.StyleVar_CellPadding, 3, 3)
 	if (ui:beginTable("##EMITTER_TBL_"..id, 3)) then 
-		--ui:popStyleVar()
 		ui:tableSetupColumn("Visbility", ImGui.TableColumnFlags_WidthFixed, 22)
 		ui:tableSetupColumn("Emitter", ImGui.TableColumnFlags_WidthStretch)
 		ui:tableSetupColumn("Delete", ImGui.TableColumnFlags_WidthFixed, 24)
@@ -510,6 +554,15 @@ function Emitter:spawn()
 			ry = h * random() - h * self.emmsionAY
 		end
 		
+		local color = self.color
+		local alpha = self.alpha
+		local rColors = #self.colors
+		
+		if (rColors > 0) then 
+			local newColor = self.colors[random(rColors)]
+			color, alpha = newColor.hex, newColor.a
+		end
+		
 		self.particles:addParticles{
 			{
 				x = self.posX + rx,
@@ -519,8 +572,8 @@ function Emitter:spawn()
 				size = self.size + frandom(self.size_min, self.size_max),
 				ttl = self.ttl + frandom(self.ttl_min, self.ttl_max),
 				angle = angle,
-				color = self.color,
-				alpha = self.alpha,
+				color = color,
+				alpha = alpha,
 				
 				speedAngular = self.speedAngular + frandom(self.speedAngular_min, self.speedAngular_max),
 				speedGrowth = self.speedGrowth + frandom(self.speedGrowth_min, self.speedGrowth_max),

@@ -9,6 +9,7 @@ ui:setAutoUpdateCursor(true)
 
 local IO = ui:getIO()
 local showEditor = true
+local showDemo = false
 
 local function loadStyles(imgui)
 	local style = imgui:getStyle()
@@ -96,7 +97,6 @@ onWindowResize()
 
 local editor = ParticlesEditor.new(ui, false)
 
-local v1,v2=0,0
 local function onDrawGui(e)
 	ui:newFrame(e)
 
@@ -106,9 +106,16 @@ local function onDrawGui(e)
 		ui:setNextWindowSize(450, Window.H, ImGui.Always)
 		showEditor, drawEditor = ui:beginWindow("Particles editor v0.5", showEditor)
 		if (drawEditor) then 
-			editor:draw()			
+			if (ui:button("DEMO")) then 
+				showDemo = true
+			end
+			editor:draw()
 		end
 		ui:endWindow()
+	end
+	
+	if (showDemo) then 
+		showDemo = ui:showDemoWindow(showDemo)
 	end
 	
 	ui:render()

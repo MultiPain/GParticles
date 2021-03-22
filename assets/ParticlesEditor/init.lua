@@ -8,8 +8,6 @@ local TABLE_FLAGS = ImGui.TableFlags_RowBg | ImGui.TableFlags_PadOuterX
 
 local SAVE_FILE_NAME = "ParticlesEditor.json"
 
-local random = math.random
-
 local defaultOptions = {
 	previewSize = 64,
 	overrideBgColor = false,
@@ -28,34 +26,11 @@ local ICONS = {
 	ON = utf8.char(0xE8F4),
 }
 
-local function split(inputstr, sep)
-	local t = {}
-	local pattern = "([^"..sep.."]+)"
-	
-	for str in inputstr:gmatch(pattern) do
-		table.insert(t, str)
-	end
-	return t
-end 
-
 ParticlesEditor = Core.class(Sprite)
 ParticlesEditor.GLOBAL_ID = 1
-ParticlesEditor.frandom = function(min, max)
-	if (not max) then 
-		max = min
-		min = 0
-	end
-	return min + random() * (max - min)
-end
-
-ParticlesEditor.clamp = function(v, min, max)
-	return (v<>min)><max
-end
-
-ParticlesEditor.split = split
 ParticlesEditor.ICONS = ICONS
-ParticlesEditor.helpMarker = helpMarker
 
+require(PATH.."/utils")
 require(PATH.."/Emitter")
 require(PATH.."/ImGuiExt")
 
@@ -80,7 +55,6 @@ function ParticlesEditor:init(imgui, enableSaveSettings)
 	
 	self.dragEmitter = false
 	self.dragType = "global" -- "local"
-	self.showDemoWindow = false
 	self.enableSaveSettings = enableSaveSettings
 	
 	self.emitters = {}
@@ -196,17 +170,15 @@ function ParticlesEditor:load()
 	end
 end
 --
+local google_texture = Texture.new("google-logo.png", true)
+local map = ParticlesEditor.map
+local black_texture = RenderTarget.new(32, 32)
+black_texture:clear(0xffffff,1)
+
 function ParticlesEditor:draw()
 	local ui = self.ui
 	local io = self.io
 	
-	--[[
-	self.showDemoWindow = ui:checkbox("Show demo", self.showDemoWindow)
-	
-	if (self.showDemoWindow) then 
-		self.showDemoWindow = ui:showDemoWindow(self.showDemoWindow)
-	end
-	]]
 	if (ui:button("Save")) then 
 		self:save()
 	end
@@ -214,8 +186,6 @@ function ParticlesEditor:draw()
 	if (ui:button("Load")) then 
 		self:load()
 	end
-	ui:sameLine()
-	ui:textDisabled("<-- WIP")
 	
 	if (ui:beginTabBar("TabBar")) then 
 		if (ui:beginTabItem("Emitters")) then 
@@ -226,57 +196,50 @@ function ParticlesEditor:draw()
 			end
 			ui:separator()
 			
-			--ui:beginChild(1, w, h - 75)
-			
 			local i = 1
 			local len = #self.emitters
 			if (len > 0) then
 				local list = ui:getBackgroundDrawList()				
 				local mx, my = ui:getMousePos()
-				
-				
-					while (i <= len) do 
-						local ps = self.emitters[i]
+				while (i <= len) do 
+					local ps = self.emitters[i]
+					
+					local mode, id0, id1 = ps:draw(i)
+					
+					if (ps.delete) then 
+						local child = table.remove(self.emitters, i)
+						self:removeChild(child)
+						len -= 1
+					else
+						local x, y = ps:getPosition()
 						
-						local mode, id0, id1 = ps:draw(i)
-						
-						if (ps.delete) then 
-							local child = table.remove(self.emitters, i)
-							self:removeChild(child)
-							len -= 1
-						else
-							local x, y = ps:getPosition()
-							
-							if (ps.visibleMarkers) then
-								list:addCircle(x, y, 32, 0, 1, nil, 2)
-								list:addCircle(x + ps.posX, y + ps.posY, 20, 0x00ff00, 1, nil, 2)
-							end
-							
-							if (not self.dragEmitter) then 
-								local dist1 = math.distance(mx, my, x, y)
-								local dist2 = math.distance(mx, my, x + ps.posX, y + ps.posY)
-								if (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_LEFT) and dist1 < 32)) then 
-									self.dragEmitter = ps
-									self.dragType = "global"
-								elseif (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_RIGHT) and dist2 < 20)) then 
-									self.dragEmitter = ps
-									self.dragType = "local"
-								end
-							end
-							
-							
-							if (mode == "copy") then 
-								--self.emitters[id1]:copyFrom(self.subParticles[id0])
-							elseif (mode == "swap") then 
-								self:swapChildren(self.emitters[id0], self.emitters[id1])
-								self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
-							end
-							i += 1
+						if (ps.visibleMarkers) then
+							list:addCircle(x, y, 32, 0, 1, nil, 2)
+							list:addCircle(x + ps.posX, y + ps.posY, 20, 0x00ff00, 1, nil, 2)
 						end
-					end	
-				--end	
-				--
-				--ui:endTable()
+						
+						if (not self.dragEmitter) then 
+							local dist1 = math.distance(mx, my, x, y)
+							local dist2 = math.distance(mx, my, x + ps.posX, y + ps.posY)
+							if (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_LEFT) and dist1 < 32)) then 
+								self.dragEmitter = ps
+								self.dragType = "global"
+							elseif (ps.drag or (ui:isMouseClicked(KeyCode.MOUSE_RIGHT) and dist2 < 20)) then 
+								self.dragEmitter = ps
+								self.dragType = "local"
+							end
+						end
+						
+						
+						if (mode == "copy") then 
+							self.emitters[id1]:copyFrom(self.emitters[id0])
+						elseif (mode == "swap") then 
+							self:swapChildren(self.emitters[id0], self.emitters[id1])
+							self.emitters[id0], self.emitters[id1] = self.emitters[id1], self.emitters[id0]
+						end
+						i += 1
+					end
+				end	
 				
 				if (self.dragEmitter) then 
 					local dx, dy = self.io:getMouseDelta()
@@ -296,33 +259,6 @@ function ParticlesEditor:draw()
 					end
 				end
 			end	
-			
-			--ui:endChild()
-			
-			--[[
-			ui:button(ICONS.TRASH, -1, -1)
-			if (ui:isItemHovered()) then 
-				ui:beginTooltip()
-				ui:text("Drag & drop emitter here")
-				ui:endTooltip()
-			end
-			if (ui:beginDragDropTarget()) then
-				local payload = ui:acceptDragDropPayload("EMITTER")
-				if (payload) then
-					local id = payload:getNumData()
-					local child = table.remove(self.emitters, id)
-					self:removeChild(child)
-				else
-					payload = ui:acceptDragDropPayload("SUB_EMITTER")
-					
-					if (payload) then
-						local str = payload:getStrData()
-						local t = split(str, ";")
-						table.remove(self.emitters[ t[1] ].subEmitters, t[2])
-					end
-				end
-			end
-			]]
 			
 			ui:endTabItem()
 		end
@@ -362,5 +298,3 @@ function ParticlesEditor:drawSettings()
 		self:saveSettings()
 	end
 end
-
-

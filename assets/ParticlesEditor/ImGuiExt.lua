@@ -9,6 +9,8 @@ local acos = math.acos
 local sqrt = math.sqrt
 local length = math.length
 local clamp = ParticlesEditor.clamp
+local map = ParticlesEditor.map
+local cmap = ParticlesEditor.cmap
 --
 function ImGui:helpMarker(desc)
 	self:textDisabled("(?)")
@@ -19,6 +21,61 @@ function ImGui:helpMarker(desc)
 		self:popTextWrapPos()
 		self:endTooltip()
 	end
+end
+--
+function ImGui:point(label, size, vx, vy, minX, minY, maxX, maxY)
+	minX = minX or -1
+	minY = minY or -1
+	maxX = maxX or 1
+	maxY = maxY or 1
+	local offset = 4
+	local spacing = 8
+	local px, py = self:getCursorScreenPos()
+	
+	self:invisibleButton("##"..label, size, size)
+	
+	if (self:isItemActive()) then 
+		local mx, my = self:getMousePos()
+		
+		vx = cmap(mx, px, px + size, minX, maxX)
+		vy = cmap(my, py, py + size, minY, maxY)
+	end
+	
+	local backupX, backupY = self:getCursorScreenPos()
+	self:sameLine()
+	local npx, npy = self:getCursorScreenPos()
+	
+	local changedX = false
+	local changedY = false
+	
+	self:pushItemWidth(100)
+	vx = self:dragFloat("X: "..label, vx, 0.01, minX, maxX)
+	local w, h = self:getItemRectSize()	
+	self:setCursorScreenPos(npx, npy + h + offset)
+	vy = self:dragFloat("Y: "..label, vy, 0.01, minY, maxY)
+	self:setCursorScreenPos(backupX, backupY)
+	self:popItemWidth()
+	
+	local draw_list = self:getWindowDrawList()
+	local style = self:getStyle()
+	local colLn = style:getColor(ImGui.Col_Text)
+	
+	local cx = map(vx, minX, maxX, px + offset, px + size - offset)
+	local cy = map(vy, minY, maxY, py + offset, py + size - offset)
+	
+	draw_list:addRect(px, py, px + size, py + size, colLn, 1, offset, nil, 1)
+	--draw_list:addLine(px + offset, cy, px + size - offset, cy, colLn, 1)
+	--draw_list:addLine(cx, py + offset, cx, py + size - offset, colLn, 1)
+	
+	draw_list:addLine(px + offset, cy, clamp(cx - spacing, px + offset, px + size - offset), cy, colLn, 1)
+	draw_list:addLine(cx, py + offset, cx, clamp(cy - spacing, py + offset, py + size - offset), colLn, 1)
+	
+	draw_list:addLine(clamp(cx + spacing, px, px + size - offset), cy, px + size - offset, cy, colLn, 1)
+	draw_list:addLine(cx, clamp(cy + spacing, py, py + size - offset), cx, py + size - offset, colLn, 1)
+	
+	draw_list:addCircle(cx, cy, spacing / 2, colLn, 1)
+	
+	return vx, vy
 end
 --
 function ImGui:dial(label, value, size, fac, max_v, offset)
@@ -65,7 +122,7 @@ function ImGui:dial(label, value, size, fac, max_v, offset)
 	
 	local col32idx = is_active and ImGui.Col_FrameBgActive or (is_hovered and ImGui.Col_FrameBgHovered or ImGui.Col_FrameBg)
 	local col32 = style:getColor(col32idx) 
-	local col32line = style:getColor(ImGui.Col_SliderGrabActive) 
+	local col32line = style:getColor(ImGui.Col_Text) 
 	local draw_list = self:getWindowDrawList()
 	draw_list:addCircleFilled( centerx, centery, radio, col32, 1 )
 	
@@ -126,7 +183,7 @@ function ImGui:spread(label, value, size, fac, max_v, adjust, offset)
 	
 	local col32idx = is_active and ImGui.Col_FrameBgActive or (is_hovered and ImGui.Col_FrameBgHovered or ImGui.Col_FrameBg)
 	local col32 = style:getColor(col32idx) 
-	local col32line = style:getColor(ImGui.Col_SliderGrabActive) 
+	local col32line = style:getColor(ImGui.Col_Text) 
 	local draw_list = self:getWindowDrawList()
 	draw_list:addCircleFilled( centerx, centery, radio, col32, 1)
 	
