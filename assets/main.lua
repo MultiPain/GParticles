@@ -1,5 +1,5 @@
 application:setBackgroundColor(0x323232)
-require "ImGui_beta"
+require "ImGui"
 require "ParticlesEditor"
 
 Window = {}
@@ -14,6 +14,9 @@ local showDemo = false
 local function loadStyles(imgui)
 	local style = imgui:getStyle()
 	
+	--style:setColor(ImGui.Col_DockingEmptyBg, 0x333333, 1.00)
+	--style:setColor(ImGui.Col_DockingPreview, 0x4296f9, 0.70)
+	
 	style:setColor(ImGui.Col_TabHovered, 0x54575b, 0.83)
 	style:setColor(ImGui.Col_NavWindowingHighlight, 0xffffff, 0.70)
 	style:setColor(ImGui.Col_FrameBgActive, 0xababaa, 0.39)
@@ -21,7 +24,6 @@ local function loadStyles(imgui)
 	style:setColor(ImGui.Col_DragDropTarget, 0x1ca3ea, 1.00)
 	style:setColor(ImGui.Col_FrameBgHovered, 0x616160, 1.00)
 	style:setColor(ImGui.Col_ScrollbarBg, 0x050505, 0.53)
-	style:setColor(ImGui.Col_DockingEmptyBg, 0x333333, 1.00)
 	style:setColor(ImGui.Col_ResizeGripActive, 0x4296f9, 0.95)
 	style:setColor(ImGui.Col_FrameBg, 0x40403f, 1.00)
 	style:setColor(ImGui.Col_Separator, 0x6e6e7f, 0.50)
@@ -48,7 +50,6 @@ local function loadStyles(imgui)
 	style:setColor(ImGui.Col_TextDisabled, 0x80807f, 1.00)
 	style:setColor(ImGui.Col_ScrollbarGrabHovered, 0x696968, 1.00)
 	style:setColor(ImGui.Col_Text, 0xffffff, 1.00)
-	style:setColor(ImGui.Col_DockingPreview, 0x4296f9, 0.70)
 	style:setColor(ImGui.Col_TitleBgActive, 0x141416, 1.00)
 	style:setColor(ImGui.Col_TabUnfocusedActive, 0x212426, 1.00)
 	style:setColor(ImGui.Col_SliderGrabActive, 0x1480b7, 1.00)

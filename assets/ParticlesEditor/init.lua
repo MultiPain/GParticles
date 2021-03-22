@@ -170,11 +170,6 @@ function ParticlesEditor:load()
 	end
 end
 --
-local google_texture = Texture.new("google-logo.png", true)
-local map = ParticlesEditor.map
-local black_texture = RenderTarget.new(32, 32)
-black_texture:clear(0xffffff,1)
-
 function ParticlesEditor:draw()
 	local ui = self.ui
 	local io = self.io

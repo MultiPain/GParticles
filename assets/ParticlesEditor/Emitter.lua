@@ -295,7 +295,6 @@ function Emitter:drawBody(id)
 		local combo_x, combo_y = ui:getCursorScreenPos()
 		if (ui:beginCombo("##EMITTER_IMG_"..id, "", ImGui.ComboFlags_HeightLargest | ImGui.ComboFlags_NoArrowButton)) then 
 			ui:popStyleVar()
-			
 			for i,v in ipairs(self.parent.images) do 
 				if (ui:scaledImageButton(v.texture, previewSize, previewSize, 4)) then 
 					self:updateTexture(v.texture, v.name)
