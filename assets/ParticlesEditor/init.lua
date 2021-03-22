@@ -1,7 +1,7 @@
 --!NOEXEC
 local PATH = (...):gsub('%.[^%.]+$', '')
 
-if (not ImGui) then require "ImGui_beta" end
+if (not ImGui) then require "ImGui" end
 if (not lfs) then require "lfs" end
 
 local TABLE_FLAGS = ImGui.TableFlags_RowBg | ImGui.TableFlags_PadOuterX
