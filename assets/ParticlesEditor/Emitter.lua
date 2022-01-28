@@ -1,14 +1,7 @@
 --!NOEXEC
-local SHAPES = {"Point", "Sphere", "Box"}
 local BLEND_MODES = {"None", Sprite.ADD, Sprite.ALPHA, Sprite.MULTIPLY, Sprite.NO_ALPHA, Sprite.SCREEN}
-local COLOR_PICKER_FLAGS = ImGui.ColorEditFlags_AlphaPreviewHalf | ImGui.ColorEditFlags_AlphaPreview
 local ICONS = ParticlesEditor.ICONS
-
-local random = math.random
 local frandom = ParticlesEditor.frandom
-local cos = math.cos
-local sin = math.sin
-local PI2 = math.pi * 2
 local toDeg = 180 / math.pi
 
 local default = {
@@ -355,7 +348,6 @@ function Emitter:drawBody(id)
 	end
 	
 	if (ui:treeNode("Emission shape##EMITTER_"..id)) then
-		local valueChanged = false
 		self.emmsionShape = ui:combo("##EMITTER_SHAPE_"..id, self.emmsionShape, "Point\0Sphere\0Box\0", 3)
 		if (self.emmsionShape == 1) then
 			self.emissionRadius = ui:dragFloat("Radius##EMITTER_ERADIUS"..id, self.emissionRadius, 0.1)
@@ -458,14 +450,17 @@ function Emitter:drawBody(id)
 		ui:openPopup("Confirm##EMITTER_CRESET_"..id)
 	end
 	
-	if (ui:beginPopupModal("Confirm##EMITTER_CRESET_"..id)) then 
+	if (ui:beginPopupModal("Confirm##EMITTER_CRESET_"..id, true, ImGui.WindowFlags_AlwaysAutoResize | ImGui.WindowFlags_NoResize)) then 
 		ui:text("This will reset all the setting.\nAre you sure you want to reset?")
-		if (ui:button("Yes##EMITTER_CRY_"..id)) then 
+		local spaceX = ui:getStyle():getItemSpacing()
+		local w = (ui:getContentRegionAvail() - spaceX) / 2
+		if (ui:button("Yes##EMITTER_CRY_"..id, w)) then 
 			-- keep name
 			self:load(default, true, id)
 			ui:closeCurrentPopup()
 		end
-		if (ui:button("No##EMITTER_CRY_"..id)) then 
+		ui:sameLine()
+		if (ui:button("No##EMITTER_CRY_"..id, -1)) then 
 			ui:closeCurrentPopup()
 		end
 		ui:endPopup()
@@ -529,8 +524,8 @@ function Emitter:spawn()
 		end
 		local theta = ^<dir
 		
-		local cosa = cos(theta)
-		local sina = sin(theta)
+		local cosa = math.cos(theta)
+		local sina = math.sin(theta)
 		
 		local speedX = cosa * speed
 		local speedY = sina * speed
@@ -549,8 +544,8 @@ function Emitter:spawn()
 		elseif (self.emmsionShape == 2) then
 			local w = self.emissionW
 			local h = self.emissionH
-			rx = w * random() - w * self.emmsionAX
-			ry = h * random() - h * self.emmsionAY
+			rx = w * math.random() - w * self.emmsionAX
+			ry = h * math.random() - h * self.emmsionAY
 		end
 		
 		local color = self.color
@@ -558,7 +553,7 @@ function Emitter:spawn()
 		local rColors = #self.colors
 		
 		if (rColors > 0) then 
-			local newColor = self.colors[random(rColors)]
+			local newColor = self.colors[math.random(rColors)]
 			color, alpha = newColor.hex, newColor.a
 		end
 		

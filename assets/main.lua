@@ -1,12 +1,10 @@
 application:setBackgroundColor(0x323232)
 require "ImGui"
-require "ParticlesEditor"
+require2 "ParticlesEditor"
 
 Window = {}
 
 local ui = ImGui.new() 
-ui:setAutoUpdateCursor(true)
-
 local IO = ui:getIO()
 local showEditor = true
 local showDemo = false
@@ -99,13 +97,13 @@ onWindowResize()
 local editor = ParticlesEditor.new(ui, false)
 
 local function onDrawGui(e)
-	ui:newFrame(e)
+	ui:newFrame(e.deltaTime)
 
 	if (showEditor) then 
 		local drawEditor = false
 		ui:setNextWindowPos(Window.Right - 450, Window.Y, ImGui.Always)
 		ui:setNextWindowSize(450, Window.H, ImGui.Always)
-		showEditor, drawEditor = ui:beginWindow("Particles editor v0.5", showEditor)
+		showEditor, drawEditor = ui:beginWindow("Particles editor v0.5", showEditor, ImGui.WindowFlags_NoResize)
 		if (drawEditor) then 
 			if (ui:button("DEMO")) then 
 				showDemo = true

@@ -1,13 +1,7 @@
 --!NOEXEC
 -- ImGui custom widgets
 
-local sin = math.sin
-local cos = math.cos
-local atan2 = math.atan2
 local pi = math.pi
-local acos = math.acos
-local sqrt = math.sqrt
-local length = math.length
 local clamp = ParticlesEditor.clamp
 local map = ParticlesEditor.map
 local cmap = ParticlesEditor.cmap
@@ -44,9 +38,6 @@ function ImGui:point(label, size, vx, vy, minX, minY, maxX, maxY)
 	local backupX, backupY = self:getCursorScreenPos()
 	self:sameLine()
 	local npx, npy = self:getCursorScreenPos()
-	
-	local changedX = false
-	local changedY = false
 	
 	self:pushItemWidth(100)
 	vx = self:dragFloat("X: "..label, vx, 0.01, minX, maxX)
@@ -105,16 +96,16 @@ function ImGui:dial(label, value, size, fac, max_v, offset)
 		local ay = mpy - centery
 		local bx = mx - centerx
 		local by = my - centery
-		local ma = length(ax, ay)
-		local mb = length(bx, by)
+		local ma = math.length(ax, ay)
+		local mb = math.length(bx, by)
 		local ab  = ax * bx + ay * by
 		local vet = ax * by - bx * ay
 		ab = ab / (ma * mb)
 		if not (ma == 0 or mb == 0 or ab < -1 or ab > 1) then
 			if (vet>0) then
-				value += acos(ab) * fac
+				value += math.acos(ab) * fac
 			else 
-				value -= acos(ab) * fac
+				value -= math.acos(ab) * fac
 			end
 			value = value % max_v
 		end
@@ -127,8 +118,8 @@ function ImGui:dial(label, value, size, fac, max_v, offset)
 	draw_list:addCircleFilled( centerx, centery, radio, col32, 1 )
 	
 	local theta = value / fac
-	local x2 = cos(theta) * (radio - offset) + centerx
-	local y2 = sin(theta) * (radio - offset) + centery
+	local x2 = math.cos(theta) * (radio - offset) + centerx
+	local y2 = math.sin(theta) * (radio - offset) + centery
 	draw_list:addLine( centerx, centery, x2, y2, col32line, 1, 2 )
 	self:sameLine()
 	self:pushItemWidth(50)
@@ -166,16 +157,16 @@ function ImGui:spread(label, value, size, fac, max_v, adjust, offset)
 		local ay = mpy - centery
 		local bx = mx - centerx
 		local by = my - centery
-		local ma = length(ax, ay)
-		local mb = length(bx, by)
+		local ma = math.length(ax, ay)
+		local mb = math.length(bx, by)
 		local ab  = ax * bx + ay * by
 		local vet = ax * by - bx * ay
 		ab = ab / (ma * mb)
 		if not (ma == 0 or mb == 0 or ab < -1 or ab > 1) then
 			if (vet>0) then
-				value += acos(ab) * fac
+				value += math.acos(ab) * fac
 			else 
-				value -= acos(ab) * fac
+				value -= math.acos(ab) * fac
 			end
 			value = clamp(value, 0, max_v)
 		end
@@ -188,12 +179,12 @@ function ImGui:spread(label, value, size, fac, max_v, adjust, offset)
 	draw_list:addCircleFilled( centerx, centery, radio, col32, 1)
 	
 	local theta = value / fac
-	local x2 = cos(theta + adjust) * (radio - offset) + centerx
-	local y2 = sin(theta + adjust) * (radio - offset) + centery
+	local x2 = math.cos(theta + adjust) * (radio - offset) + centerx
+	local y2 = math.sin(theta + adjust) * (radio - offset) + centery
 	draw_list:addLine( centerx, centery, x2, y2, col32line, 1, 2)
 	
-	x2 = cos(adjust - theta) * (radio - offset) + centerx
-	y2 = sin(adjust - theta) * (radio - offset) + centery
+	x2 = math.cos(adjust - theta) * (radio - offset) + centerx
+	y2 = math.sin(adjust - theta) * (radio - offset) + centery
 	draw_list:addLine( centerx, centery, x2, y2, col32line, 1, 2)
 	
 	draw_list:pathClear()

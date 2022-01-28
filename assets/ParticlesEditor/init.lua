@@ -1,10 +1,9 @@
 --!NOEXEC
-local PATH = (...):gsub('%.[^%.]+$', '')
+local PATH = ...
 
+if (not json) then require "json" end
 if (not ImGui) then require "ImGui" end
 if (not lfs) then require "lfs" end
-
-local TABLE_FLAGS = ImGui.TableFlags_RowBg | ImGui.TableFlags_PadOuterX
 
 local SAVE_FILE_NAME = "ParticlesEditor.json"
 
@@ -75,8 +74,6 @@ function ParticlesEditor:init(imgui, enableSaveSettings)
 end
 --
 function ParticlesEditor:loadSave()
-	if (not json) then require "json" end
-	
 	local file = io.open("|D|"..SAVE_FILE_NAME, "r")
 	if (file) then 
 		local tString = file:read("*a")
@@ -97,7 +94,7 @@ end
 --
 function ParticlesEditor:saveSettings()
 	if (not self.enableSaveSettings) then return end
-	if (not json) then require "json" end
+	
 	local file = io.open("|D|"..SAVE_FILE_NAME, "w")
 	if (file) then 
 		local tString = json.encode(self.settings)
@@ -172,7 +169,6 @@ end
 --
 function ParticlesEditor:draw()
 	local ui = self.ui
-	local io = self.io
 	
 	if (ui:button("Save")) then 
 		self:save()
